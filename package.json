@@ -1,19 +1,21 @@
 {
-  "name": "typescript-template",
+  "name": "ngency",
   "version": "1.0.4",
-  "description": "A complete Node.js project template using TypeScript and following general best practices.",
+  "description": "Client side of Ngency: A game engine focusing on immersive responsive participatory experiences!",
   "keywords": [
     "typescript",
-    "template"
+    "ecmascript",
+    "game",
+    "game engine"
   ],
   "author": {
-    "name": "Chris Wells",
-    "url": "https://chriswells.io"
+    "name": "Patrick Canfield",
+    "url": "https://patrickcanfield.com"
   },
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chriswells0/node-typescript-template.git"
+    "url": "https://github.com/patreeceeo/ngency-es.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
