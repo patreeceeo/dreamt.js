@@ -1,5 +1,3 @@
-"use strict";
-
 import { Logger } from "sitka";
 
 export class Example {
