@@ -5,8 +5,8 @@ node_js:
   - "14"
 install:
   - npm install
-script:
-  - npm run cover:check
+# script:
+#   - npm run cover:check
 # Node 6 doesn't run prepare after install:
 before_script: "npm run build"
 # Send test coverage data to Coveralls:
