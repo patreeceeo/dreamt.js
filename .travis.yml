@@ -10,4 +10,4 @@ script:
 # Node 6 doesn't run prepare after install:
 before_script: "npm run build"
 # Send test coverage data to Coveralls:
-after_script: "npm run coveralls"
+# after_script: "npm run coveralls"
