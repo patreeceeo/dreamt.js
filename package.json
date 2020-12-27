@@ -1,12 +1,18 @@
 {
-  "name": "ngency",
+  "name": "dreamt",
   "version": "0.0.1",
-  "description": "Client side of Ngency: A game engine focusing on immersive responsive participatory experiences!",
+  "description": "Client side engine for immersive, networked, expressive creations",
   "keywords": [
     "typescript",
     "ecmascript",
-    "game",
-    "game engine"
+    "game engine",
+    "webgl",
+    "websocket",
+    "webrtc",
+    "three.js",
+    "react-three-fiber",
+    "cannon-es",
+    "ecsy"
   ],
   "author": {
     "name": "Patrick Canfield",
@@ -15,7 +21,7 @@
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "https://github.com/patreeceeo/ngency-es.git"
+    "url": "https://github.com/patreeceeo/dreamt.js.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

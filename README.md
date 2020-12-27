@@ -1,6 +1,6 @@
-# Ngency
+# Dreamt
 
-Client side of Ngency: A game engine focusing on immersive responsive participatory experiences!
+Client side engine for immersive, networked, expressive creations
 
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
@@ -35,7 +35,7 @@ Once you've enabled CI, test coverage, and dependency reports for your project, 
 Clone this repo into the directory you want to use for your new project, delete the Git history, and then reinit as a fresh Git repo:
 
 ```bash
-$ git clone https://github.com/patreeceeo/ngency-es.git <your project directory>
+$ git clone https://github.com/patreeceeo/dreamt.js.git <your project directory>
 $ cd <your project directory>
 $ rm -rf ./.git/
 $ git init
@@ -52,8 +52,8 @@ Use exact searches to perform the following replacements throughout this project
 
 1. Replace my name with yours: `Patrick Canfield`
 2. Replace my website URL with yours: `https://patrickcanfield.com`
-3. Replace my _GitHub_ username and project name with yours: `patreeceeo/ngency-es`
-4. Replace my _NPM_ project name with yours: `ngency`
+3. Replace my _GitHub_ username and project name with yours: `patreeceeo/dreamt.js`
+4. Replace my _NPM_ project name with yours: `dreamt`
 5. Update [package.json](package.json):
    - Change `description` to suit your project.
    - Update the `keywords` list.
@@ -112,18 +112,18 @@ Follow these steps to update your NPM package:
 
 This section is here as a reminder for you to explain to your users how to contribute to the projects you create from this template.
 
-[project-url]: https://github.com/patreeceeo/ngency-es
-[package-image]: https://badge.fury.io/js/ngency.svg
-[package-url]: https://badge.fury.io/js/ngency
-[issues-image]: https://img.shields.io/github/issues/patreeceeo/ngency-es.svg?style=popout
-[issues-url]: https://github.com/patreeceeo/ngency-es/issues
-[build-image]: https://travis-ci.org/patreeceeo/ngency-es.svg?branch=master
-[build-url]: https://travis-ci.org/patreeceeo/ngency-es
-[coverage-image]: https://coveralls.io/repos/github/patreeceeo/ngency-es/badge.svg?branch=master
-[coverage-url]: https://coveralls.io/github/patreeceeo/ngency-es?branch=master
-[dependencies-image]: https://david-dm.org/patreeceeo/ngency-es/status.svg
-[dependencies-url]: https://david-dm.org/patreeceeo/ngency-es
-[dev-dependencies-image]: https://david-dm.org/patreeceeo/ngency-es/dev-status.svg
-[dev-dependencies-url]: https://david-dm.org/patreeceeo/ngency-es?type=dev
+[project-url]: https://github.com/patreeceeo/dreamt.js
+[package-image]: https://badge.fury.io/js/dreamt.svg
+[package-url]: https://badge.fury.io/js/dreamt
+[issues-image]: https://img.shields.io/github/issues/patreeceeo/dreamt.js.svg?style=popout
+[issues-url]: https://github.com/patreeceeo/dreamt.js/issues
+[build-image]: https://travis-ci.org/patreeceeo/dreamt.js.svg?branch=master
+[build-url]: https://travis-ci.org/patreeceeo/dreamt.js
+[coverage-image]: https://coveralls.io/repos/github/patreeceeo/dreamt.js/badge.svg?branch=master
+[coverage-url]: https://coveralls.io/github/patreeceeo/dreamt.js?branch=master
+[dependencies-image]: https://david-dm.org/patreeceeo/dreamt.js/status.svg
+[dependencies-url]: https://david-dm.org/patreeceeo/dreamt.js
+[dev-dependencies-image]: https://david-dm.org/patreeceeo/dreamt.js/dev-status.svg
+[dev-dependencies-url]: https://david-dm.org/patreeceeo/dreamt.js?type=dev
 [commitizen-image]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg
 [commitizen-url]: http://commitizen.github.io/cz-cli
