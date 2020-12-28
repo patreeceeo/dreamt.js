@@ -12,12 +12,94 @@ Client side engine for immersive, networked, expressive creations.
 
 ## Contents
 
-- [Suggested Development Workflow](#development-workflow)
+- [An example usage](#example)
+- [Suggested Development Workflow](#developing)
 - [Releasing New Code](#releasing)
 - [Contributing](#contributing)
 - [Credits](#credits)
 
-### Development Workflow
+### Example
+
+The code below is just meant to be illustrative, it is not _necessary_ a functioning program.
+
+```javascript.jsx
+/* GolfBallMesh.jsx */
+import * as React from 'react';
+
+// Using primatives from react-three-fiber
+export const GolfBallMesh = ({position, rotation}) => (
+  <mesh position={position} rotation={rotation}>
+    <sphereBufferGeometry args={1}/>
+    <meshBasicMaterial color="blue"/>
+  </mesh>
+)
+
+/* main.js */
+import * as Dreamt from 'dreamt';
+import {withNetworking, withScript, withReactThree} from 'dreamt/components';
+import {GolfBallScript, BilliardBallScript} from './scripts';
+import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
+
+Dreamt.defWorld("minigolf", ({yourTurn}) => {
+  const entities = [
+    Dreamt.defEntity(
+      withNetworking(),
+      withScript(GolfBallScript, {yourTurn}),
+      withReactThree(GolfBallMesh)
+    ),
+  ];
+
+  return {entities};
+}, {
+  "data.selectors": {
+    yourTurn: selectYourTurn,
+  }
+})
+
+Dreamt.defWorld("billiards", ({yourTurn}) => {
+  const entities = [
+    Dreamt.defEntity(
+      withNetworking(),
+      withScript(BilliardBallScript, {yourTurn}),
+      withReactThree(BilliardBallMesh)
+    ),
+  ];
+
+  return {entities};
+}, {
+  "data.selectors": {
+    yourTurn: selectYourTurn,
+  }
+});
+
+const engine = new Dreamt.Engine(
+  ({currentWorld, error}) => {
+    if(!error) {
+      Dreamt.visitWorld(currentWorld);
+    } else {
+      displayErrorScreen(error);
+    }
+  },
+  {
+    "network.socket": {
+      path: "/socket",
+      params: {
+        playerId: () => localStorage.getItem("playerId")
+      },
+      topic: "sportballs"
+    },
+    "data.selectors": {
+      currentWorld: selectCurrentWorld,
+      error: selectError
+    }
+  }
+)
+
+// Start this whole shebang!
+engine.loop();
+```
+
+### Developing
 
 These steps need to be performed whenever you make changes:
 
