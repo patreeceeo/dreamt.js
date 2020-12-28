@@ -38,7 +38,7 @@
     "preversion": "npm run build && npm run cover:check",
     "postversion": "git push && git push --tags",
     "prepare": "npm run build",
-    "test": "jest",
+    "test": "node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage",
     "upgrade": "npx npm-check -u",
     "version": "npm run build && npm run changelog:update"
   },
