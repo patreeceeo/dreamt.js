@@ -1,6 +1,8 @@
 # Dreamt
 
-Client side engine for immersive, networked, expressive creations.
+Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with high vividness and process intensity. This package constitutes the client-side half of the complete engine, though it can be used alone for single player or local multiplayer games. Taking a cue from React, its API aims to be declarative wherever possible.
+
+Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there's enough interest.
 
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
@@ -96,8 +98,10 @@ const engine = new Dreamt.Engine(
 )
 
 // Start this whole shebang!
-engine.loop();
+engine.loopForever();
 ```
+
+Note: Physics, if desired, can be wired up using [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) within `react-three-fiber` components.
 
 ### Developing
 
