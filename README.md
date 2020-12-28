@@ -61,3 +61,19 @@ Alternatively, (though less awesomely):
 
 - @chriswells0
   - the fantastic [Typescript node package](https://github.com/chriswells0/node-typescript-template) template used as a starting point
+
+[project-url]: https://github.com/patreeceeo/dreamt.js
+[package-image]: https://badge.fury.io/js/typescript-template.svg
+[package-url]: https://badge.fury.io/js/typescript-template
+[issues-image]: https://img.shields.io/github/issues/patreeceeo/dreamt.js.svg?style=popout
+[issues-url]: https://github.com/patreeceeo/dreamt.js/issues
+[build-image]: https://travis-ci.org/patreeceeo/dreamt.js.svg?branch=master
+[build-url]: https://travis-ci.org/patreeceeo/dreamt.js
+[coverage-image]: https://coveralls.io/repos/github/patreeceeo/dreamt.js/badge.svg?branch=master
+[coverage-url]: https://coveralls.io/github/patreeceeo/dreamt.js?branch=master
+[dependencies-image]: https://david-dm.org/patreeceeo/dreamt.js/status.svg
+[dependencies-url]: https://david-dm.org/patreeceeo/dreamt.js
+[dev-dependencies-image]: https://david-dm.org/patreeceeo/dreamt.js/dev-status.svg
+[dev-dependencies-url]: https://david-dm.org/patreeceeo/dreamt.js?type=dev
+[commitizen-image]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg
+[commitizen-url]: http://commitizen.github.io/cz-cli
