@@ -69,7 +69,10 @@ import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
 Dreamt.defWorld("minigolf", ({yourTurn}) => {
   const entities = [
     Dreamt.defEntity(
-      // shorthand for withComponent(Position3d)
+      // Shorthand for withComponent(Position3d).
+      // These components allow scripts to access the corresponding
+      // properties of the entity, without them, @react-three/cannon can still
+      // update them directly on the Object3D instances.
       withPosition3d(),
       withRotation3d(),
       withScript(GolfBallScript, {yourTurn}),
