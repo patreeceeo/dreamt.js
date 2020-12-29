@@ -24,7 +24,7 @@ Its current design couples tighly with React because it suits me this way. It co
 
 ### Example
 
-The code below is just meant to be illustrative, it is not _necessary_ a functioning program.
+The code below is just meant to be illustrative, it is not _necessarily_ a functioning program.
 
 ```javascript.jsx
 /* GolfBall.jsx */
@@ -129,6 +129,7 @@ engine.loopForever();
 ```
 
 Note: Physics, if desired, can be wired up using [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) within `react-three-fiber` components.
+
 PS: Until [#124](https://github.com/pmndrs/use-cannon/pull/124) is merged I recommend using [my fork of @react-three/cannon](https://github.com/patreeceeo/use-cannon).
 
 ### Developing
