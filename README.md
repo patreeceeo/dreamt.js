@@ -26,7 +26,7 @@ Its current design couples tighly with React because it suits me this way. It co
 
 The code below is just meant to be illustrative, it is not _necessarily_ a functioning program.
 
-```javascript.jsx
+```javascript
 /* GolfBall.jsx */
 import * as React from 'react';
 import {useSphere} from '@react-three/cannon';
@@ -163,7 +163,7 @@ Follow these steps to update the NPM package:
 ### Contributing
 
 0. Create a fork on GitHub
-1. Use the [Suggested Development Workflow](#development-workflow)
+1. Use the [Suggested Development Workflow](#development)
 2. Create a GitHub pull request from your fork
 
 Alternatively, (though less awesomely):

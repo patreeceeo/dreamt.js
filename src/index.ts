@@ -13,7 +13,17 @@ export class Example {
 
   /* Public Instance Methods */
 
-  public exampleMethod(param: string): string {
+  /**
+   * Example method
+   *
+   * @param param whatever
+   * @param {boolean} test what happens when jsdoc/ts disagree?
+   * @param {boolean} test2 what happens when jsdoc/ts agree?
+   * @returns whatever
+   */
+  public exampleMethod(param: string, test: any, test2: boolean): string {
+    void test;
+    void test2;
     this._logger.debug("Received: " + param);
     return param;
   }
