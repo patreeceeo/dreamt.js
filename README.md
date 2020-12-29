@@ -44,7 +44,6 @@ export const GolfBall = ({scripts}) => {
     mass: 4
   }),
     null,
-    // Note: I have a fork of @react-three/cannon which merged [#124](https://github.com/pmndrs/use-cannon/pull/124)
     [position, rotation]
   );
 
@@ -130,6 +129,7 @@ engine.loopForever();
 ```
 
 Note: Physics, if desired, can be wired up using [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) within `react-three-fiber` components.
+PS: Until [#124](https://github.com/pmndrs/use-cannon/pull/124) is merged I recommend using [my fork of @react-three/cannon](https://github.com/patreeceeo/use-cannon).
 
 ### Developing
 
