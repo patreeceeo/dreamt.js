@@ -1,5 +1,7 @@
 # Dreamt
 
+Just a thing I dreamt up to help me keep pace with my imagination.
+
 Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with high vividness and process intensity. This package constitutes the client-side half of the complete engine, though it can be used alone for single player or local multiplayer games. Taking a cue from React, its API aims to be declarative wherever possible.
 
 Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there's enough interest.
@@ -25,29 +27,54 @@ Its current design couples tighly with React because it suits me this way. It co
 The code below is just meant to be illustrative, it is not _necessary_ a functioning program.
 
 ```javascript.jsx
-/* GolfBallMesh.jsx */
+/* GolfBall.jsx */
 import * as React from 'react';
+import {useSphere} from '@react-three/cannon';
+import {Position3D, Rotation3D} from 'dreamt/components';
+import {useComponent} from 'dreamt/hooks/react';
 
-// Using primatives from react-three-fiber
-export const GolfBallMesh = ({position, rotation}) => (
-  <mesh position={position} rotation={rotation}>
-    <sphereBufferGeometry args={1}/>
-    <meshBasicMaterial color="blue"/>
-  </mesh>
-)
+export const GolfBall = ({scripts}) => {
+  const position = useComponent(Position3D);
+  const rotation = useComponent(Rotation3D);
+
+  const [cannon, cannonApi] = useSphere(() => ({
+    args: 1
+    position,
+    rotation,
+    mass: 4
+  }),
+    null,
+    // Note: I have a fork of @react-three/cannon which merged [#124](https://github.com/pmndrs/use-cannon/pull/124)
+    [position, rotation]
+  );
+
+  React.useEffect(() => {
+    scripts.provide({cannonApi});
+  }, [cannonApi]);
+
+  // Using primatives from react-three-fiber
+  return (
+    <mesh ref={cannon}>
+      <sphereBufferGeometry args={1}/>
+      <meshBasicMaterial color="blue"/>
+    </mesh>
+  )
+}
 
 /* main.js */
 import * as Dreamt from 'dreamt';
-import {withNetworking, withScript, withReactThree} from 'dreamt/components';
+import {withPosition3d, withRotation3d, withScript, withReactThree} from 'dreamt/components';
 import {GolfBallScript, BilliardBallScript} from './scripts';
 import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
 
 Dreamt.defWorld("minigolf", ({yourTurn}) => {
   const entities = [
     Dreamt.defEntity(
-      withNetworking(),
+      // shorthand for withComponent(Position3d)
+      withPosition3d(),
+      withRotation3d(),
       withScript(GolfBallScript, {yourTurn}),
-      withReactThree(GolfBallMesh)
+      withReactThree(GolfBall)
     ),
   ];
 
@@ -61,7 +88,8 @@ Dreamt.defWorld("minigolf", ({yourTurn}) => {
 Dreamt.defWorld("billiards", ({yourTurn}) => {
   const entities = [
     Dreamt.defEntity(
-      withNetworking(),
+      withPosition3d(),
+      withRotation3d(),
       withScript(BilliardBallScript, {yourTurn}),
       withReactThree(BilliardBallMesh)
     ),
