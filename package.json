@@ -34,7 +34,7 @@
     "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "clean": "(rm -r ./coverage || true) && (rm -r ./dist || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
-    "cover:check": "jest --coverage",
+    "cover:check": "npm test -- --coverage",
     "coveralls": "npm run cover:check && coveralls < ./coverage/lcov.info",
     "preversion": "npm run build && npm run cover:check",
     "postversion": "git push && git push --tags",
