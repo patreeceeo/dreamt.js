@@ -6,6 +6,8 @@ Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with hi
 
 Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there's enough interest.
 
+Note: This is still vaporware (though quite technically feasible!) It won't ready to use until version 0.1.0.
+
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
 [![Build Status][build-image]][build-url]
