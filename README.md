@@ -181,8 +181,8 @@ Alternatively, (though less awesomely):
   - the fantastic [Typescript node package](https://github.com/chriswells0/node-typescript-template) template used as a starting point
 
 [project-url]: https://github.com/patreeceeo/dreamt.js
-[package-image]: https://badge.fury.io/js/typescript-template.svg
-[package-url]: https://badge.fury.io/js/typescript-template
+[package-image]: https://badge.fury.io/js/dreamt.svg
+[package-url]: https://badge.fury.io/js/dreamt
 [issues-image]: https://img.shields.io/github/issues/patreeceeo/dreamt.js.svg?style=popout
 [issues-url]: https://github.com/patreeceeo/dreamt.js/issues
 [build-image]: https://travis-ci.org/patreeceeo/dreamt.js.svg?branch=main
