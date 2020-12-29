@@ -14,6 +14,10 @@ Its current design couples tighly with React because it suits me this way. It co
 [![Dev Dependencies Status][dev-dependencies-image]][dev-dependencies-url]
 [![Commitizen Friendly][commitizen-image]][commitizen-url]
 
+## Docs
+
+[click here for documentation and API reference materials](https://patreeceeo.github.io/dreamt.js/)
+
 ## Contents
 
 - [An example usage](#example)
