@@ -64,6 +64,7 @@
 				<p>Just a thing I dreamt up to help me keep pace with my imagination.</p>
 				<p>Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with high vividness and process intensity. This package constitutes the client-side half of the complete engine, though it can be used alone for single player or local multiplayer games. Taking a cue from React, its API aims to be declarative wherever possible.</p>
 				<p>Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there&#39;s enough interest.</p>
+				<p>Note: This is still vaporware (though quite technically feasible!) It won&#39;t ready to use until version 0.1.0.</p>
 				<p><a href="https://badge.fury.io/js/dreamt"><img src="https://badge.fury.io/js/dreamt.svg" alt="Package Version"></a>
 					<a href="https://github.com/patreeceeo/dreamt.js/issues"><img src="https://img.shields.io/github/issues/patreeceeo/dreamt.js.svg?style=popout" alt="Open Issues"></a>
 					<a href="https://travis-ci.org/patreeceeo/dreamt.js"><img src="https://travis-ci.org/patreeceeo/dreamt.js.svg?branch=main" alt="Build Status"></a>
@@ -71,12 +72,15 @@
 					<a href="https://david-dm.org/patreeceeo/dreamt.js"><img src="https://david-dm.org/patreeceeo/dreamt.js/status.svg" alt="Dependencies Status"></a>
 					<a href="https://david-dm.org/patreeceeo/dreamt.js?type=dev"><img src="https://david-dm.org/patreeceeo/dreamt.js/dev-status.svg" alt="Dev Dependencies Status"></a>
 				<a href="http://commitizen.github.io/cz-cli"><img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg" alt="Commitizen Friendly"></a></p>
+				<a href="#docs" id="docs" style="color: inherit; text-decoration: none;">
+					<h2>Docs</h2>
+				</a>
+				<p><a href="https://patreeceeo.github.io/dreamt.js/">click here for documentation and API reference materials</a></p>
 				<a href="#contents" id="contents" style="color: inherit; text-decoration: none;">
 					<h2>Contents</h2>
 				</a>
 				<ul>
 					<li><a href="#example">An example usage</a></li>
-					<li><a href="#api">API reference</a></li>
 					<li><a href="#developing">Suggested Development Workflow</a></li>
 					<li><a href="#releasing">Releasing New Code</a></li>
 					<li><a href="#contributing">Contributing</a></li>
@@ -121,19 +125,19 @@
 
 <span style="color: #008000">/* main.js */</span>
 <span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">Dreamt</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">withPosition3d</span><span style="color: #000000">, </span><span style="color: #001080">withRotation3d</span><span style="color: #000000">, </span><span style="color: #001080">withScript</span><span style="color: #000000">, </span><span style="color: #001080">withReactThree</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt/components&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">withPosition3D</span><span style="color: #000000">, </span><span style="color: #001080">withRotation3D</span><span style="color: #000000">, </span><span style="color: #001080">withScript</span><span style="color: #000000">, </span><span style="color: #001080">withReactThree</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt/components&#039;</span><span style="color: #000000">;</span>
 <span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">GolfBallScript</span><span style="color: #000000">, </span><span style="color: #001080">BilliardBallScript</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./scripts&#039;</span><span style="color: #000000">;</span>
 <span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">selectCurrentWorld</span><span style="color: #000000">, </span><span style="color: #001080">selectYourTurn</span><span style="color: #000000">, </span><span style="color: #001080">selectError</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./globalState&#039;</span><span style="color: #000000">;</span>
 
 <span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defWorld</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;minigolf&quot;</span><span style="color: #000000">, ({</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
 <span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">entities</span><span style="color: #000000"> = [</span>
 <span style="color: #000000">    </span><span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defEntity</span><span style="color: #000000">(</span>
-<span style="color: #000000">      </span><span style="color: #008000">// Shorthand for withComponent(Position3d).</span>
+<span style="color: #000000">      </span><span style="color: #008000">// Shorthand for withComponent(Position3D).</span>
 <span style="color: #000000">      </span><span style="color: #008000">// These components allow scripts to access the corresponding</span>
 <span style="color: #000000">      </span><span style="color: #008000">// properties of the entity, without them, @react-three/cannon can still</span>
 <span style="color: #000000">      </span><span style="color: #008000">// update them directly on the Object3D instances.</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withPosition3d</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withRotation3d</span><span style="color: #000000">(),</span>
+<span style="color: #000000">      </span><span style="color: #795E26">withPosition3D</span><span style="color: #000000">(),</span>
+<span style="color: #000000">      </span><span style="color: #795E26">withRotation3D</span><span style="color: #000000">(),</span>
 <span style="color: #000000">      </span><span style="color: #795E26">withScript</span><span style="color: #000000">(</span><span style="color: #001080">GolfBallScript</span><span style="color: #000000">, {</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}),</span>
 <span style="color: #000000">      </span><span style="color: #795E26">withReactThree</span><span style="color: #000000">(</span><span style="color: #001080">GolfBall</span><span style="color: #000000">)</span>
 <span style="color: #000000">    ),</span>
@@ -149,8 +153,8 @@
 <span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defWorld</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;billiards&quot;</span><span style="color: #000000">, ({</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
 <span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">entities</span><span style="color: #000000"> = [</span>
 <span style="color: #000000">    </span><span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defEntity</span><span style="color: #000000">(</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withPosition3d</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withRotation3d</span><span style="color: #000000">(),</span>
+<span style="color: #000000">      </span><span style="color: #795E26">withPosition3D</span><span style="color: #000000">(),</span>
+<span style="color: #000000">      </span><span style="color: #795E26">withRotation3D</span><span style="color: #000000">(),</span>
 <span style="color: #000000">      </span><span style="color: #795E26">withScript</span><span style="color: #000000">(</span><span style="color: #001080">BilliardBallScript</span><span style="color: #000000">, {</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}),</span>
 <span style="color: #000000">      </span><span style="color: #795E26">withReactThree</span><span style="color: #000000">(</span><span style="color: #001080">BilliardBallMesh</span><span style="color: #000000">)</span>
 <span style="color: #000000">    ),</span>
@@ -191,17 +195,6 @@
 </code></pre>
 				<p>Note: Physics, if desired, can be wired up using <a href="https://github.com/pmndrs/use-cannon"><code>@react-three/cannon</code></a> within <code>react-three-fiber</code> components.</p>
 				<p>PS: Until <a href="https://github.com/pmndrs/use-cannon/pull/124">#124</a> is merged I recommend using <a href="https://github.com/patreeceeo/use-cannon">my fork of @react-three/cannon</a>.</p>
-				<a href="#api" id="api" style="color: inherit; text-decoration: none;">
-					<h3>API</h3>
-				</a>
-				<a href="#components" id="components" style="color: inherit; text-decoration: none;">
-					<h4>Components</h4>
-				</a>
-				<p>Components in Dreamt are not be confused with components in React, or components in any general sense. Components in Dreamt have the specific sematics of components in an Entity Component System (ECS). For the unfamiliar, Components in an ECS can be thought of as containers for data which are read/modified by specific Systems. They can also be &quot;tags&quot; which merely signify participation in specific Systems. Some helpful though imperfect anologies include adjectives, as opposed to nouns in OOP, columns in a database table schema.</p>
-				<a href="#position3d" id="position3d" style="color: inherit; text-decoration: none;">
-					<h5>Position3D</h5>
-				</a>
-				<p>import {useComponent} from &#39;dreamt/hooks/react&#39;;</p>
 				<a href="#developing" id="developing" style="color: inherit; text-decoration: none;">
 					<h3>Developing</h3>
 				</a>
@@ -235,7 +228,7 @@
 				</a>
 				<ol start="0">
 					<li>Create a fork on GitHub</li>
-					<li>Use the <a href="#development-workflow">Suggested Development Workflow</a></li>
+					<li>Use the <a href="#development">Suggested Development Workflow</a></li>
 					<li>Create a GitHub pull request from your fork</li>
 				</ol>
 				<p>Alternatively, (though less awesomely):</p>
@@ -265,6 +258,12 @@
 				<ul>
 					<li class=" ">
 						<a href="modules.html">Exports</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/components_position3d.html">components/<wbr>Position3D</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/components_rotation3d.html">components/<wbr>Rotation3D</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="modules/index.html">index</a>

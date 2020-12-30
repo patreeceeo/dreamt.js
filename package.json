@@ -29,10 +29,11 @@
     "dist/"
   ],
   "scripts": {
-    "build": "npm run clean && tsc && tsdoc --out docs src",
+    "build": "npm run clean && tsc",
+    "docs": "(rm -r ./dist || true) && (rm -r ./docs || true) && typedoc --out docs src",
     "changelog": "conventional-changelog -p angular -u",
     "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
-    "clean": "(rm -r ./coverage || true) && (rm -r ./dist || true) && (rm -r ./docs || true)",
+    "clean": "(rm -r ./coverage || true) && (rm -r ./dist || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
     "cover:check": "npm test -- --coverage",
     "coveralls": "npm run cover:check && coveralls < ./coverage/lcov.info",
@@ -63,6 +64,7 @@
     }
   },
   "dependencies": {
+    "ecsy": "^0.4.2",
     "sitka": "^1.0.5"
   },
   "husky": {

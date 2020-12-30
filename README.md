@@ -68,19 +68,19 @@ export const GolfBall = ({scripts}) => {
 
 /* main.js */
 import * as Dreamt from 'dreamt';
-import {withPosition3d, withRotation3d, withScript, withReactThree} from 'dreamt/components';
+import {withPosition3D, withRotation3D, withScript, withReactThree} from 'dreamt/components';
 import {GolfBallScript, BilliardBallScript} from './scripts';
 import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
 
 Dreamt.defWorld("minigolf", ({yourTurn}) => {
   const entities = [
     Dreamt.defEntity(
-      // Shorthand for withComponent(Position3d).
+      // Shorthand for withComponent(Position3D).
       // These components allow scripts to access the corresponding
       // properties of the entity, without them, @react-three/cannon can still
       // update them directly on the Object3D instances.
-      withPosition3d(),
-      withRotation3d(),
+      withPosition3D(),
+      withRotation3D(),
       withScript(GolfBallScript, {yourTurn}),
       withReactThree(GolfBall)
     ),
@@ -96,8 +96,8 @@ Dreamt.defWorld("minigolf", ({yourTurn}) => {
 Dreamt.defWorld("billiards", ({yourTurn}) => {
   const entities = [
     Dreamt.defEntity(
-      withPosition3d(),
-      withRotation3d(),
+      withPosition3D(),
+      withRotation3D(),
       withScript(BilliardBallScript, {yourTurn}),
       withReactThree(BilliardBallMesh)
     ),
