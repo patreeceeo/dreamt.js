@@ -63,7 +63,7 @@ export const GolfBall = ({scripts}) => {
       <sphereBufferGeometry args={1}/>
       <meshBasicMaterial color="blue"/>
     </mesh>
-  )
+  );
 }
 
 /* main.js */
@@ -71,70 +71,47 @@ import * as Dreamt from 'dreamt';
 import {withPosition3D, withRotation3D, withScript, withReactThree} from 'dreamt/components';
 import {GolfBallScript, BilliardBallScript} from './scripts';
 import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
+import GolfBall from './GolfBall';
+import ErrorOverlay from './ErrorOverlay';
 
-Dreamt.defWorld("minigolf", ({yourTurn}) => {
+const Minigolf = ({error, yourTurn}) => {
+  const ball = Dreamt.composeEntity([
+    // Shorthand for withComponent(Position3D).
+    // These components allow scripts to access the corresponding
+    // properties of the entity, without them, @react-three/cannon can still
+    // update them directly on the Object3D instances.
+    withPosition3D(),
+    withRotation3D(),
+    withScript(GolfBallScript, {yourTurn}),
+    withReactThree(GolfBall)
+  ])
+
+  const errorOverlay = Dreamt.composeEntity([
+    withReactThree(ErrorOverlay, error)
+  ]);
+
   const entities = [
-    Dreamt.defEntity(
-      // Shorthand for withComponent(Position3D).
-      // These components allow scripts to access the corresponding
-      // properties of the entity, without them, @react-three/cannon can still
-      // update them directly on the Object3D instances.
-      withPosition3D(),
-      withRotation3D(),
-      withScript(GolfBallScript, {yourTurn}),
-      withReactThree(GolfBall)
-    ),
+    ball,
+    ...(error ? [errorOverlay] : [])
   ];
 
   return {entities};
-}, {
-  "data.selectors": {
-    yourTurn: selectYourTurn,
-  }
-})
-
-Dreamt.defWorld("billiards", ({yourTurn}) => {
-  const entities = [
-    Dreamt.defEntity(
-      withPosition3D(),
-      withRotation3D(),
-      withScript(BilliardBallScript, {yourTurn}),
-      withReactThree(BilliardBallMesh)
-    ),
-  ];
-
-  return {entities};
-}, {
-  "data.selectors": {
-    yourTurn: selectYourTurn,
-  }
 });
 
-const engine = new Dreamt.Engine(
-  ({currentWorld, error}) => {
-    if(!error) {
-      Dreamt.visitWorld(currentWorld);
-    } else {
-      displayErrorScreen(error);
-    }
-  },
-  {
-    "network.socket": {
-      path: "/socket",
-      params: {
-        playerId: () => localStorage.getItem("playerId")
-      },
-      topic: "sportballs"
-    },
-    "data.selectors": {
-      currentWorld: selectCurrentWorld,
-      error: selectError
-    }
-  }
-)
-
 // Start this whole shebang!
-engine.loopForever();
+Dreamt.execute(Minigolf, {
+  "network.socket": {
+    path: "/socket",
+    params: {
+      playerId: () => localStorage.getItem("playerId")
+    },
+    topic: "sportballs"
+  },
+  "data.selectors": {
+    yourTurn: selectYourTurn,
+    error: selectError
+  }
+});
 ```
 
 Note: Physics, if desired, can be wired up using [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) within `react-three-fiber` components.
