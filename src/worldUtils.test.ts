@@ -1,33 +1,23 @@
-import {Entity, World} from 'ecsy';
+import {World} from 'ecsy';
 import {observable, runInAction} from 'mobx';
 import {addEntities, manageEntities, DreamtComponentConstructor, EntityMap} from './worldUtils';
+import {cast, IWorld, IEntity} from './testUtils';
 
-function mockEntity(): Partial<Entity> {
-  return {
-    addComponent: jest.fn()
-  };
-}
+jest.mock('ecsy');
 
 describe("worldUtils", () => {
   test("addEntities", () => {
     const c1 = {} as DreamtComponentConstructor;
     const c2 = {} as DreamtComponentConstructor;
-    const added = new Map();
     const toBeAdded: EntityMap = new Map([
       ['a', new Set()],
       ['b', new Set([c1])],
       ['c', new Set([c1, c2])]
     ]);
     const world = new World();
-    spyOn(world, "createEntity").and.callFake(
-      (name: string) => {
-        const entity = mockEntity();
-        added.set(name, entity)
-        return entity as Entity;
-      }
-    )
+    const added = cast<IWorld>(world).__getEntities();
 
-    addEntities(world as World, toBeAdded);
+    addEntities(world, toBeAdded);
 
     expect(world.createEntity).toHaveBeenCalledTimes(3);
     expect(world.createEntity).toHaveBeenCalledWith('a');
@@ -48,8 +38,6 @@ describe("worldUtils/manageEntities", () => {
     const entitiesObservable = observable.map(entities);
     const world = new World();
 
-    spyOn(world, "createEntity");
-
     manageEntities(world, entitiesObservable);
 
     runInAction(() =>{
@@ -59,5 +47,27 @@ describe("worldUtils/manageEntities", () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(world.createEntity).toHaveBeenCalledWith('ball');
+  });
+
+  it("facilitates reactively adding components", async () => {
+    const rigidBody = {};
+    const ball = observable.set<DreamtComponentConstructor>();
+    const entitiesObservable = observable.map({ball});
+    const world = new World();
+    const addedEntities = cast<IWorld>(world).__getEntities();
+
+    manageEntities(world, entitiesObservable);
+
+    runInAction(() =>{
+      const ball = entitiesObservable.get("ball");
+      cast<Set<any>>(ball).add(rigidBody);
+    })
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    // casting to IEntity since it's "possibly undefined" from `tsc`'s
+    // perspective, but we know it isn't ;)
+    const ballEntity = cast<IEntity>(addedEntities.get("ball"));
+    expect(ballEntity.addComponent).toHaveBeenCalledWith(rigidBody);
   });
 });
