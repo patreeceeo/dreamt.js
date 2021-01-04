@@ -1,6 +1,6 @@
 import {World} from 'ecsy';
 import {observable, runInAction} from 'mobx';
-import {addEntities, manageEntities, DreamtComponentConstructor, EntityMap} from './worldUtils';
+import {actions, addEntities, manageEntities, DreamtComponentConstructor, EntityMap} from './worldUtils';
 import {cast, IWorld, IEntity} from './testUtils';
 
 jest.mock('ecsy');
@@ -19,26 +19,31 @@ describe("worldUtils", () => {
 
     addEntities(world, toBeAdded);
 
+
     expect(world.createEntity).toHaveBeenCalledTimes(3);
     expect(world.createEntity).toHaveBeenCalledWith('a');
     expect(world.createEntity).toHaveBeenCalledWith('b');
     expect(world.createEntity).toHaveBeenCalledWith('c');
 
-    expect(added.get('a').addComponent).not.toHaveBeenCalled();
-    expect(added.get('b').addComponent).toHaveBeenCalledWith(c1);
-    expect(added.get('c').addComponent).toHaveBeenCalledWith(c1);
-    expect(added.get('c').addComponent).toHaveBeenCalledWith(c2);
+    // casting to IEntity since it's "possibly undefined" from `tsc`'s
+    // perspective, but we know it isn't ;)
+    const entityA = cast<IEntity>(added.get('a'));
+    const entityB = cast<IEntity>(added.get('b'));
+    const entityC = cast<IEntity>(added.get('c'));
+    expect(entityA.addComponent).not.toHaveBeenCalled();
+    expect(entityB.addComponent).toHaveBeenCalledWith(c1);
+    expect(entityC.addComponent).toHaveBeenCalledWith(c1);
+    expect(entityC.addComponent).toHaveBeenCalledWith(c2);
   });
 });
 
 describe("worldUtils/manageEntities", () => {
   it("facilitates reactive entity creation", async () => {
-    const entities = new Map();
     const ball: DreamtComponentConstructor[] = [];
-    const entitiesObservable = observable.map(entities);
+    const entitiesObservable = observable.map();
     const world = new World();
 
-    manageEntities(world, entitiesObservable);
+    manageEntities(world, entitiesObservable, observable.map());
 
     runInAction(() =>{
       entitiesObservable.set("ball", ball);
@@ -49,6 +54,35 @@ describe("worldUtils/manageEntities", () => {
     expect(world.createEntity).toHaveBeenCalledWith('ball');
   });
 
+  it("facilitates reactive entity destruction", async () => {
+    // be wary of memory leaks!
+    const pacman = observable.set<DreamtComponentConstructor>();
+    const pwrup = observable.set<DreamtComponentConstructor>();
+    const entitiesObservable = observable.map({pacman, pwrup});
+    const actionsObservable = observable.map();
+    const world = new World();
+    const addedEntities = cast<IWorld>(world).__getEntities();
+
+    manageEntities(world, entitiesObservable, actionsObservable);
+
+    // allow entities to be added
+    await new Promise((resolve) => setImmediate(resolve));
+    const puEntity = cast<IEntity>(addedEntities.get("pwrup"));
+
+    runInAction(() => {
+      actionsObservable.set(puEntity, actions.REMOVE);
+    });
+
+    // allow entities to be removed
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const pmEntity = cast<IEntity>(addedEntities.get("pacman"));
+    expect(pmEntity.remove).not.toHaveBeenCalled();
+    expect(puEntity.remove).toHaveBeenCalledTimes(1);
+    // it should clear actions once they've executed
+    expect(actionsObservable.size).toBe(0);
+  });
+
   it("facilitates reactively adding components", async () => {
     const rigidBody = {};
     const ball = observable.set<DreamtComponentConstructor>();
@@ -56,7 +90,7 @@ describe("worldUtils/manageEntities", () => {
     const world = new World();
     const addedEntities = cast<IWorld>(world).__getEntities();
 
-    manageEntities(world, entitiesObservable);
+    manageEntities(world, entitiesObservable, observable.map());
 
     runInAction(() =>{
       const ball = entitiesObservable.get("ball");
@@ -65,8 +99,6 @@ describe("worldUtils/manageEntities", () => {
 
     await new Promise((resolve) => setImmediate(resolve));
 
-    // casting to IEntity since it's "possibly undefined" from `tsc`'s
-    // perspective, but we know it isn't ;)
     const ballEntity = cast<IEntity>(addedEntities.get("ball"));
     expect(ballEntity.addComponent).toHaveBeenCalledWith(rigidBody);
   });

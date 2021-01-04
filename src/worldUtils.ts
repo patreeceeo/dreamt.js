@@ -7,6 +7,12 @@ type ObservableEntityMap = ObservableMap<string, ObservableSet<DreamtComponentCo
 
 export type EntityMap = Map<string, Set<DreamtComponentConstructor>> | ObservableEntityMap;
 
+export const actions = {
+  REMOVE: "remove",
+};
+
+type ObservableActionMap = ObservableMap<Entity, keyof typeof actions>;
+
 export function addEntities(world: World, addMap: EntityMap) {
   for(const entry of addMap.entries()) {
     const entity = world.createEntity(entry[0]);
@@ -20,9 +26,19 @@ function addComponents(entity: Entity, components: Set<DreamtComponentConstructo
   });
 }
 
+export function removeEntities(iter: IterableIterator<Entity>) {
+  for(const entity of iter) {
+    entity.remove();
+  }
+}
 
-export function manageEntities(world: World, entitiesObservable: ObservableEntityMap) {
+export function manageEntities(world: World, entitiesObservable: ObservableEntityMap, actionMap: ObservableActionMap) {
   autorun(() => {
+    // for now the only action is remove
+    removeEntities(actionMap.keys());
+    actionMap.clear();
+    // execute implicit "add" actions
     addEntities(world, entitiesObservable);
   })
 }
+
