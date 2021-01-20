@@ -46,13 +46,18 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.19",
+    "@types/lodash": "^4.14.168",
     "@types/node": "^14.0.5",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
     "conventional-changelog-cli": "^2.0.12",
     "coveralls": "^3.0.3",
     "cz-conventional-changelog": "^3.0.2",
     "husky": "^4.3.6",
     "jest": "^26.6.3",
     "jsdoc": "^3.6.6",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "source-map-support": "^0.5.12",
     "ts-jest": "^26.4.4",
     "typedoc": "^0.20.2",
@@ -64,10 +69,13 @@
     }
   },
   "dependencies": {
-    "ecsy": "^0.4.2",
-    "mobx": "^6.0.4",
+    "ecsy": "0.4.2",
+    "lodash": "^4.17.20",
+    "mobx": "6.0.4",
+    "mobx-react-lite": "3.1.6",
     "sitka": "^1.0.5"
   },
+  "peerDependencies": {},
   "husky": {
     "hooks": {
       "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true"

@@ -1,5 +1,7 @@
 import { Logger } from "sitka";
 
+export {EntityRenderConnector} from './render';
+
 export class Example {
   /* Private Instance Fields */
 
