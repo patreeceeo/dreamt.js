@@ -2,7 +2,7 @@ import {RenderState} from './RenderState';
 import * as ECSY from 'ecsy';
 
 describe("RenderState", () => {
-  test("forEachEntity", () => {
+  test("mapEntities", () => {
     const sut = new RenderState();
 
     class ComponentA extends ECSY.Component<any> {}
@@ -18,11 +18,11 @@ describe("RenderState", () => {
     sut.entities.add(e3);
     sut.entities.add(e4);
 
-    const spyA = jest.fn();
-    const spyB = jest.fn();
+    const spyA = jest.fn((x) => x);
+    const spyB = jest.fn((x) => x);
 
-    sut.forEachEntity(spyA, {withComponent: ComponentA});
-    sut.forEachEntity(spyB, {withComponent: ComponentB});
+    const resA = sut.mapEntities(spyA, {withComponent: ComponentA});
+    const resB = sut.mapEntities(spyB, {withComponent: ComponentB});
 
     expect(spyA).toHaveBeenCalledTimes(2);
     expect(spyB).toHaveBeenCalledTimes(2);
@@ -32,5 +32,8 @@ describe("RenderState", () => {
 
     expect(spyB).toHaveBeenCalledWith(e1, expect.any(ComponentB));
     expect(spyB).toHaveBeenCalledWith(e3, expect.any(ComponentB));
+
+    expect(resA).toEqual([e1, e2]);
+    expect(resB).toEqual([e1, e3]);
   });
 });

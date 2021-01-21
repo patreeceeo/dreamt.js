@@ -9,15 +9,17 @@ export class RenderState {
     queries.forEach((q) => q.results.forEach((e) => this.entities.add(e)));
   });
 
-  forEachEntity(
-    cb: (entity: ECSY.Entity, comp: ECSY.Component<any>) => void,
-    query: { withComponent: ECSY.ComponentConstructor<ECSY.Component<any>> }
-  ) {
+  mapEntities<TComponentConstructor extends ECSY.ComponentConstructor<ECSY.Component<any>>, TReturn>(
+    cb: (entity: ECSY.Entity, comp: ECSY.Component<any>) => TReturn,
+    query: { withComponent: TComponentConstructor }
+  ): TReturn[] {
+    const result: TReturn[] = [];
     this.entities.forEach((ent)=>{
       const comp = ent.getComponent(query.withComponent);
       if(comp) {
-        cb(ent, comp);
+        result.push(cb(ent, comp));
       }
     })
+    return result;
   }
 }
