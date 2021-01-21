@@ -1,7 +1,10 @@
 import * as ECSY from "ecsy";
-import { DreamtComponentConstructor } from "../../src/EntityManager";
 import { RenderState } from "./RenderState";
 import _ from "lodash";
+
+export type DreamtComponentConstructor<T = any> = ECSY.ComponentConstructor<
+  ECSY.Component<T>
+>;
 
 interface IERCAttributes {
   renderToDom: (state: RenderState) => void;
