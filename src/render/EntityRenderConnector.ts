@@ -1,5 +1,5 @@
 import * as ECSY from "ecsy";
-import { DreamtComponentConstructor } from "../../dist/EntityManager";
+import { DreamtComponentConstructor } from "../../src/EntityManager";
 import { RenderState } from "./RenderState";
 import _ from "lodash";
 
