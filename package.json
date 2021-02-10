@@ -1,6 +1,6 @@
 {
   "name": "dreamt",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Client side engine for immersive, networked, expressive creations",
   "keywords": [
     "typescript",
@@ -45,7 +45,7 @@
     "version": "npm run build && npm run changelog:update"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.19",
+    "@types/jest": "^26.0.20",
     "@types/lodash": "^4.14.168",
     "@types/node": "^14.0.5",
     "@types/react": "^17.0.0",

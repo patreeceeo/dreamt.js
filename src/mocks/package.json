@@ -1,0 +1,5 @@
+{
+  "name": "dreamt/mocks",
+  "main": "dist/mocks/index.js",
+  "types": "dist/mocks/index.d.ts"
+}
