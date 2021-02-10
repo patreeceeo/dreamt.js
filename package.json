@@ -24,6 +24,10 @@
     "url": "https://github.com/patreeceeo/dreamt.js.git"
   },
   "main": "dist/index.js",
+  "exports": {
+    ".": "dist/index.js",
+    "./mocks": "dist/mocks/index.js"
+  },
   "types": "dist/index.d.ts",
   "files": [
     "dist/"
