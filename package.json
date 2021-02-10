@@ -1,6 +1,6 @@
 {
   "name": "dreamt",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Client side engine for immersive, networked, expressive creations",
   "keywords": [
     "typescript",
@@ -25,8 +25,8 @@
   },
   "main": "dist/index.js",
   "exports": {
-    ".": "dist/index.js",
-    "./mocks": "dist/mocks/index.js"
+    ".": "./dist/index.js",
+    "./mocks": "./dist/mocks/index.js"
   },
   "types": "dist/index.d.ts",
   "files": [
