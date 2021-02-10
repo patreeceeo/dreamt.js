@@ -1,6 +1,10 @@
 import * as ECSY from "ecsy";
 
-export function replaceComponent(entity: ECSY.Entity, Component: ECSY.ComponentConstructor<any>, data?: any) {
+export function replaceComponent(
+  entity: ECSY.Entity,
+  Component: ECSY.ComponentConstructor<any>,
+  data?: any
+) {
   if (entity.hasComponent(Component)) {
     entity.removeComponent(Component);
   }
@@ -17,10 +21,15 @@ export function copyMap<K, V>(target: Map<K, V>, source: Map<K, V>) {
   });
 }
 
-export function extendEntity(Clazz: typeof ECSY.Entity) {
-  return class DreamtEntity extends Clazz {
-    replaceComponent(Component: ECSY.ComponentConstructor<any>, data: any) {
-      replaceComponent(this, Component, data);
-    }
+export class DreamtEntity extends ECSY._Entity {
+  replaceComponent(Component: ECSY.ComponentConstructor<any>, data: any) {
+    replaceComponent(this, Component, data);
   }
 }
+
+export class DreamtWorld extends ECSY.World<DreamtEntity> {
+  constructor(options = {}) {
+    options = Object.assign({entityClass: DreamtEntity}, options);
+    super(options);
+  }
+};

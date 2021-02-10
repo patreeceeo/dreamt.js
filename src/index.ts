@@ -1,16 +1,26 @@
 import { Logger } from "sitka";
-import * as ESCY from "ecsy";
-import { extendEntity } from "./ecsExtensions";
+export {
+    System,
+    Not,
+    Component,
+    SystemStateComponent,
+    TagComponent,
+    Types,
+    createType,
+    copyValue,
+    cloneValue,
+    copyArray,
+    cloneArray,
+    copyJSON,
+    cloneJSON,
+    copyCopyable,
+    cloneClonable,
+} from "ecsy";
+import { DreamtWorld, DreamtEntity } from "./ecsExtensions";
+
+export const World = DreamtWorld;
+export const _Entity = DreamtEntity;
 export { copyMap } from "./ecsExtensions";
-
-const { Entity, ...restOfESCY } = ESCY;
-
-const EntityExt = extendEntity(Entity);
-
-export default {
-  Entity: EntityExt,
-  ...restOfESCY,
-};
 
 export { EntityRenderConnector, RenderState } from "./render";
 
