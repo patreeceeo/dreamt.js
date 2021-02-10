@@ -1,6 +1,18 @@
 import { Logger } from "sitka";
+import * as ESCY from "ecsy";
+import { extendEntity } from "./ecsExtensions";
+export { copyMap } from "./ecsExtensions";
 
-export {EntityRenderConnector, RenderState} from './render';
+const { Entity, ...restOfESCY } = ESCY;
+
+const EntityExt = extendEntity(Entity);
+
+export default {
+  Entity: EntityExt,
+  ...restOfESCY,
+};
+
+export { EntityRenderConnector, RenderState } from "./render";
 
 export class Example {
   /* Private Instance Fields */
