@@ -19,7 +19,9 @@ export {
 import { DreamtWorld, DreamtEntity } from "./ecsExtensions";
 
 export const World = DreamtWorld;
+export type World = DreamtWorld;
 export const _Entity = DreamtEntity;
+export type Entity = DreamtEntity;
 export { copyMap } from "./ecsExtensions";
 
 export { EntityRenderConnector, RenderState } from "./render";
