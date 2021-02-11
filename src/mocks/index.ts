@@ -1,15 +1,22 @@
-import {cast, IWorld, IEntity, RealEntity, RealComponentConstructor} from '../testUtils';
+import {cast, IWorld, IEntity, RealWorld, RealEntity, RealComponentConstructor} from '../testUtils';
 
 export class Entity implements IEntity {
-  _components = {} as any;
-  _componentData = {} as any;
-  addComponent = jest.fn((C: RealComponentConstructor<any>, data) => {
-    this._components[C.name] = new C(data);
+  _components = {} as {[key: string]: RealComponentConstructor<any>};
+
+  addComponent = jest.fn((Class: RealComponentConstructor<any>, data) => {
+    const instance = new Class(data);
+    this._components[Class.name] = instance;
     return cast<RealEntity>(this);
   });
 
-  getComponent(C: RealComponentConstructor<any>) {
+  getComponent = cast<RealEntity["getComponent"]>((C: RealComponentConstructor<any>) => {
     return this._components[C.name];
+  })
+
+  getMutableComponent = this.getComponent
+
+  hasComponent(C: RealComponentConstructor<any>) {
+    return !!this._components[C.name];
   }
 
   remove = jest.fn();
@@ -26,7 +33,8 @@ export class Component {
 }
 
 export const Types = {
-  String: 'String'
+  String: 'String',
+  Number: 'Number'
 };
 
 export class World implements IWorld {
@@ -42,6 +50,6 @@ export class World implements IWorld {
     return this.entities;
   }
 
-  registerComponent = jest.fn();
-  registerSystem = jest.fn();
+  registerComponent = cast<RealWorld["registerComponent"]>(jest.fn(() => this));
+  registerSystem = cast<RealWorld["registerSystem"]>(jest.fn(() => this));
 }

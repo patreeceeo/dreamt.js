@@ -1,12 +1,12 @@
 # Dreamt
 
-Just a thing I dreamt up to help me keep pace with my imagination.
+A thing I dreamt up to help me keep pace with my creative whims in the realm of 3D networked video games.
 
-Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with high vividness and process intensity. This package constitutes the client-side half of the complete engine, though it can be used alone for single player or local multiplayer games. Taking a cue from React, its API aims to be declarative wherever possible.
+Probably not ready for anyone else to use.
 
-Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there's enough interest.
+Stands on the shoulders of open-source giants. Currently this list includes THREE.js, ECSY, CANNON.js (actually, the active ECMAScript fork, [cannon-es](https://github.com/pmndrs/cannon-es)) etc.
 
-Note: This is still vaporware (though quite technically feasible!) It won't ready to use until version 0.1.0.
+Designed to be friendly with FP rendering engines (e.g. React). See src/render/EntityRenderConnector.ts
 
 [![Package Version][package-image]][package-url]
 [![Open Issues][issues-image]][issues-url]
@@ -22,97 +22,10 @@ Note: This is still vaporware (though quite technically feasible!) It won't read
 
 ## Contents
 
-- [An example usage](#example)
 - [Suggested Development Workflow](#developing)
 - [Releasing New Code](#releasing)
 - [Contributing](#contributing)
 - [Credits](#credits)
-
-### Example
-
-The code below is just meant to be illustrative, it is not _necessarily_ a functioning program.
-
-```javascript
-/* GolfBall.jsx */
-import * as React from 'react';
-import {useSphere} from '@react-three/cannon';
-import {Position3D, Rotation3D} from 'dreamt/components';
-import {useComponent} from 'dreamt/hooks/react';
-
-export const GolfBall = ({scripts}) => {
-  const position = useComponent(Position3D);
-  const rotation = useComponent(Rotation3D);
-
-  const [cannon, cannonApi] = useSphere(() => ({
-    args: 1
-    position,
-    rotation,
-    mass: 4
-  }),
-    null,
-    [position, rotation]
-  );
-
-  React.useEffect(() => {
-    scripts.provide({cannonApi});
-  }, [cannonApi]);
-
-  // Using primatives from react-three-fiber
-  return (
-    <mesh ref={cannon}>
-      <sphereBufferGeometry args={1}/>
-      <meshBasicMaterial color="blue"/>
-    </mesh>
-  );
-}
-
-/* main.js */
-import * as Dreamt from 'dreamt';
-import {withPosition3D, withRotation3D, withScript, withReactThree} from 'dreamt/components';
-import {GolfBallScript, BilliardBallScript} from './scripts';
-import {selectCurrentWorld, selectYourTurn, selectError} from './globalState';
-import GolfBall from './GolfBall';
-import ErrorOverlay from './ErrorOverlay';
-
-const Minigolf = ({error, yourTurn}) => {
-  const ball = Dreamt.composeEntity([
-    // Shorthand for withComponent(Position3D).
-    // These components allow scripts to access the corresponding
-    // properties of the entity, without them, @react-three/cannon can still
-    // update them directly on the Object3D instances.
-    withPosition3D(),
-    withRotation3D(),
-    withScript(GolfBallScript, {yourTurn}),
-    withReactThree(GolfBall)
-  ])
-
-  const errorOverlay = Dreamt.composeEntity([
-    withReactThree(ErrorOverlay, error)
-  ]);
-
-  const entities = [
-    ball,
-    ...(error ? [errorOverlay] : [])
-  ];
-
-  return {entities};
-});
-
-// Start this whole shebang!
-Dreamt.execute(Minigolf, {
-  "network.socket": {
-    path: "/socket",
-    params: {
-      playerId: () => localStorage.getItem("playerId")
-    },
-    topic: "sportballs"
-  },
-  "data.selectors": {
-    yourTurn: selectYourTurn,
-    error: selectError
-  }
-});
-```
 
 Note: Physics, if desired, can be wired up using [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) within `react-three-fiber` components.
 

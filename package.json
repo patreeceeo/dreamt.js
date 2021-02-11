@@ -1,7 +1,7 @@
 {
   "name": "dreamt",
-  "version": "0.1.2",
-  "description": "Client side engine for immersive, networked, expressive creations",
+  "version": "0.2.0",
+  "description": "Assorted reusable bits of game code and, aspirationally, a flexible, 3D, performant, networked game engine",
   "keywords": [
     "typescript",
     "ecmascript",
@@ -65,7 +65,8 @@
     "source-map-support": "^0.5.12",
     "ts-jest": "^26.4.4",
     "typedoc": "^0.20.2",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.3",
+    "utility-types": "^3.10.0"
   },
   "config": {
     "commitizen": {
