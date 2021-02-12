@@ -6,6 +6,7 @@ export {
     SystemStateComponent,
     TagComponent,
     Types,
+    World,
     createType,
     copyValue,
     cloneValue,
