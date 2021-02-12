@@ -1,15 +1,13 @@
 import * as ECSY from "ecsy";
 import { RenderState } from "./RenderState";
 import _ from "lodash";
+import { ComponentConstructor } from '../';
 
-export type DreamtComponentConstructor<T = any> = ECSY.ComponentConstructor<
-  ECSY.Component<T>
->;
 
 interface IERCAttributes {
   renderToDom: (state: RenderState) => void;
   components: {
-    [key: string]: DreamtComponentConstructor;
+    [key: string]: ComponentConstructor;
   };
 }
 
