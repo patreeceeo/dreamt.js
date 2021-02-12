@@ -1,4 +1,5 @@
 export {
+    _Entity as Entity,
     System,
     Not,
     Component,
