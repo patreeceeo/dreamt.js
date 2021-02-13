@@ -8,8 +8,12 @@ class SocketSession {
   getEntityById(id: number | string) {
     return this._entityMap.get(id);
   }
-  removeEntityById(id: number | string) {
+  removeEntityById(idOrEntity: number | string | ECSY.Entity) {
+    const id: number | string = (idOrEntity as ECSY.Entity).id ? (idOrEntity as ECSY.Entity).id : (idOrEntity as (number | string));
     this._entityMap.delete(id);
+  }
+  getEntityIterator() {
+    return this._entityMap.entries();
   }
 }
 
