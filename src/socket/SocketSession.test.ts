@@ -2,8 +2,16 @@ import SocketSession from "./SocketSession";
 import * as ECSY from "ecsy";
 // import * as PHX from "phoenix";
 
-// class ComponentA extends ECSY.Component<any> {}
-// class ComponentB extends ECSY.Component<any> {}
+function iterableToArray<I, A = I>(
+  it: Iterable<I>,
+  transformItem: (x:I) => A = (x:I)=> x as unknown as A
+): Array<A> {
+  const list = [];
+  for(const item of it) {
+    list.push(transformItem(item))
+  }
+  return list;
+}
 
 describe("SocketSession", () => {
   // Use weakmap
@@ -12,12 +20,11 @@ describe("SocketSession", () => {
 
   test("set/get/removeEntityById + getEntityIterator", () => {
     function listEntityIds(sut: SocketSession) {
-      const list = [];
-      const it = sut.getEntityIterator();
-      for (const entry of it) {
-        list.push(entry[0]);
-      }
-      return list;
+      return iterableToArray(sut.getEntityIterator(), (entry) => entry[0]);
+    }
+
+    function listEntities(sut: SocketSession) {
+      return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
     }
 
     const sut = new SocketSession();
@@ -26,6 +33,7 @@ describe("SocketSession", () => {
     const entityB = world.createEntity("b");
 
     expect(listEntityIds(sut)).toEqual([]);
+    expect(listEntities(sut)).toEqual([]);
 
     entityA.id = 1;
     sut.setEntityById(entityA);
@@ -34,33 +42,38 @@ describe("SocketSession", () => {
     expect(sut.getEntityById(1)).toBe(entityA);
     expect(sut.getEntityById("B")).toBe(entityB);
     expect(listEntityIds(sut)).toEqual([1, "B"]);
+    expect(listEntities(sut)).toEqual([entityA, entityB]);
 
     sut.removeEntityById(entityA);
     expect(listEntityIds(sut)).toEqual(["B"]);
+    expect(listEntities(sut)).toEqual([entityB]);
     sut.removeEntityById("B");
 
     expect(sut.getEntityById(1)).not.toBeDefined();
     expect(sut.getEntityById("B")).not.toBeDefined();
     expect(listEntityIds(sut)).toEqual([]);
+    expect(listEntities(sut)).toEqual([]);
   });
 
-  // test("set/removeWhitelistedComponent + getComponentWhitelist", () => {
-  //   const sut = new SocketSession();
+  test("(dis)allowComponent + getAllowedComponentIterator", () => {
+    function getAllowedComponentList(sut: SocketSession) {
+      return iterableToArray(sut.getAllowedComponentIterator());
+    }
 
-  //   sut.setWhitelistedComponent(ComponentA);
-  //   sut.setWhitelistedComponent(ComponentB);
+    class ComponentA extends ECSY.Component<any> {}
+    class ComponentB extends ECSY.Component<any> {}
 
-  //   expect(sut.getComponentWhitelist()).toEqual([
-  //     ComponentA,
-  //     ComponentB
-  //   ]);
+    const sut = new SocketSession();
 
-  //   sut.removeWhitelistedComponent(ComponentA);
+    sut.allowComponent(ComponentA);
+    sut.allowComponent(ComponentB);
 
-  //   expect(sut.getComponentWhitelist()).toEqual([
-  //     ComponentB
-  //   ])
-  // });
+    expect(getAllowedComponentList(sut)).toEqual([ComponentA, ComponentB]);
+
+    sut.disallowComponent(ComponentA);
+
+    expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
+  });
 
   // test("connect", ()=> {
   //   const sut = new SocketSession('seance');
