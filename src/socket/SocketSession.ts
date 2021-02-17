@@ -1,20 +1,22 @@
 import * as ECSY from "ecsy";
 import { ComponentConstructor } from "../index";
 import * as PHX from "phoenix";
+import {get, set} from 'lodash';
 
-// interface ISerializedSocketSession {
-//   [entityId: string]: {
-//     [componentName: string]: {
-//       value: any;
-//     };
-//   };
-// }
+interface IUpdates {
+  [entityId: string]: {
+    [componentId: string]: {
+      value: any;
+    };
+  };
+}
 
 class SocketSession {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
   socket: PHX.Socket | null = null;
   channel: PHX.Channel | null = null;
+  _lastUpdate: IUpdates | null = null;
 
   setEntityById(id: string, entity: ECSY.Entity) {
     this._entityMap.set(id, entity);
@@ -45,16 +47,21 @@ class SocketSession {
   }
 
   getUpdates() {
-    //   const result: ISerializedSocketSession = {};
-    //   for(const entry of this.getEntityIterator()) {
-    //     const entity = result[entry[0] as string] = {};
-    //     for(const Component of this.getAllowedComponentIterator()) {
-    //       const comp = entity[Component.name] = {};
-    //       comp.value = entity.getComponent(Component).value;
-    //     }
-    //   }
+    const result: IUpdates = {};
+    const path = ['' ,'' , 'value'];
+    for (const [entityId, entity] of this.getEntityIterator()) {
+      path[0] = entityId;
+      for (const [componentId, Component] of this.getAllowedComponentIterator()) {
+        const currentValue = (entity.getComponent(Component) as any)?.value;
+        path[1] = componentId;
+        if(get(this._lastUpdate, path) !== currentValue) {
+          set(result, path, currentValue);
+        }
+      }
+    }
+    this._lastUpdate = result;
+    return result;
   }
-  clearUpdates() {}
 
   pushUpdates() {
     if (this.channel) {
@@ -62,7 +69,6 @@ class SocketSession {
       this.channel.push("update_entities", {
         body: updates,
       });
-      this.clearUpdates();
     }
   }
 
