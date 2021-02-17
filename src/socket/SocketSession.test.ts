@@ -1,6 +1,6 @@
 import SocketSession from "./SocketSession";
 import * as ECSY from "ecsy";
-// import * as PHX from "phoenix";
+import { cast } from '../testUtils';
 
 function iterableToArray<I, A = I>(
   it: Iterable<I>,
@@ -35,29 +35,31 @@ describe("SocketSession", () => {
     expect(listEntityIds(sut)).toEqual([]);
     expect(listEntities(sut)).toEqual([]);
 
-    entityA.id = 1;
-    sut.setEntityById(entityA);
-    sut.setEntityById(entityB, "B");
+    sut.setEntityById("A", entityA);
+    sut.setEntityById("B", entityB);
 
-    expect(sut.getEntityById(1)).toBe(entityA);
+    expect(sut.getEntityById("A")).toBe(entityA);
     expect(sut.getEntityById("B")).toBe(entityB);
-    expect(listEntityIds(sut)).toEqual([1, "B"]);
+    expect(listEntityIds(sut)).toEqual(["A", "B"]);
     expect(listEntities(sut)).toEqual([entityA, entityB]);
 
-    sut.removeEntityById(entityA);
+    sut.removeEntityById("A");
     expect(listEntityIds(sut)).toEqual(["B"]);
     expect(listEntities(sut)).toEqual([entityB]);
     sut.removeEntityById("B");
 
-    expect(sut.getEntityById(1)).not.toBeDefined();
+    expect(sut.getEntityById("A")).not.toBeDefined();
     expect(sut.getEntityById("B")).not.toBeDefined();
     expect(listEntityIds(sut)).toEqual([]);
     expect(listEntities(sut)).toEqual([]);
   });
 
   test("(dis)allowComponent + getAllowedComponentIterator", () => {
+    function getAllowedComponentIdList(sut: SocketSession) {
+      return iterableToArray(sut.getAllowedComponentIterator(), (entry) => entry[0]);
+    }
     function getAllowedComponentList(sut: SocketSession) {
-      return iterableToArray(sut.getAllowedComponentIterator());
+      return iterableToArray(sut.getAllowedComponentIterator(), (entry) => entry[1]);
     }
 
     class ComponentA extends ECSY.Component<any> {}
@@ -65,21 +67,70 @@ describe("SocketSession", () => {
 
     const sut = new SocketSession();
 
-    sut.allowComponent(ComponentA);
-    sut.allowComponent(ComponentB);
+    sut.allowComponent("a", ComponentA);
+    sut.allowComponent("b", ComponentB);
 
+    expect(getAllowedComponentIdList(sut)).toEqual(["a", "b"]);
     expect(getAllowedComponentList(sut)).toEqual([ComponentA, ComponentB]);
 
-    sut.disallowComponent(ComponentA);
+    sut.disallowComponent("a");
 
+    expect(getAllowedComponentIdList(sut)).toEqual(["b"]);
     expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
   });
 
-  // test("connect", ()=> {
-  //   const sut = new SocketSession('seance');
+  // test("getUpdates", () => {
+  //   class ComponentA extends ECSY.Component<any> {}
+  //   class ComponentB extends ECSY.Component<any> {}
 
-  //   sut.connect();
+  //   const world = new ECSY.World()
+  //     .registerComponent(ComponentA)
+  //     .registerComponent(ComponentB);
+  //   const entityA = world.createEntity("a")
+  //     .addComponent(ComponentA, { value: 1 })
+  //     .addComponent(ComponentB, { value: 2 })
+  //   const sut = new SocketSession();
+
+  //   sut.allowComponent("a", ComponentA);
+  //   sut.setEntityById("a", entityA);
   // });
+  //
+  // test("clearUpdates", () => {
 
-  // test("pushLocalChangeSet");
+  test("connect + pushUpdates", ()=> {
+    const sut = new SocketSession();
+    spyOn(sut, 'getUpdates').and.returnValue({
+      anEntity: {
+        aComponent: 1
+      }
+    })
+    spyOn(sut, 'clearUpdates');
+
+    sut.connect('seance');
+
+    expect(sut.socket?.endPointURL()).toEqual("/socket");
+    expect(sut.socket?.connect).toHaveBeenCalledTimes(1);
+    expect(sut.socket?.channel).toHaveBeenCalledTimes(1);
+    expect(sut.socket?.channel).toHaveBeenCalledWith('seance');
+
+    // Should not recreate socket/channel if exists already
+    sut.connect('seance');
+
+    cast<jest.Mock>(sut.socket?.channel).mockReset();
+    expect(sut.socket?.channel).toHaveBeenCalledTimes(0);
+
+    // Sends data over the socket representing changes since last call
+    // WRT the allowed components of all registered entities
+    sut.pushUpdates();
+    expect(sut.channel?.push).toHaveBeenCalledTimes(1)
+    expect(sut.channel?.push).toHaveBeenCalledWith("update_entities", {
+      body: {
+        anEntity: {
+          aComponent: 1
+        }
+      }
+    })
+    expect(sut.clearUpdates).toHaveBeenCalledTimes(1);
+  });
+
 });

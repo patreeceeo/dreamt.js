@@ -52,6 +52,7 @@
     "@types/jest": "^26.0.20",
     "@types/lodash": "^4.14.168",
     "@types/node": "^14.0.5",
+    "@types/phoenix": "^1.5.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "conventional-changelog-cli": "^2.0.12",
@@ -78,6 +79,7 @@
     "lodash": "^4.17.20",
     "mobx": "6.0.4",
     "mobx-react-lite": "3.1.6",
+    "phoenix": "^1.5.7",
     "sitka": "^1.0.5"
   },
   "peerDependencies": {},
