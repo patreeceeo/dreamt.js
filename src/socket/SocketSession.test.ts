@@ -13,19 +13,18 @@ function iterableToArray<I, A = I>(
   return list;
 }
 
+function listEntityIds(sut: SocketSession) {
+  return iterableToArray(sut.getEntityIterator(), (entry) => entry[0]);
+}
+
+function listEntities(sut: SocketSession) {
+  return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
+}
+// TODO rename to Transporter
 describe("SocketSession", () => {
-
   test("set/get/removeEntityById + getEntityIterator", () => {
-    function listEntityIds(sut: SocketSession) {
-      return iterableToArray(sut.getEntityIterator(), (entry) => entry[0]);
-    }
-
-    function listEntities(sut: SocketSession) {
-      return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
-    }
-
-    const sut = new SocketSession();
     const world = new ECSY.World();
+    const sut = new SocketSession(world);
     const entityA = world.createEntity("a");
     const entityB = world.createEntity("b");
 
@@ -68,7 +67,8 @@ describe("SocketSession", () => {
     class ComponentA extends ECSY.Component<any> {}
     class ComponentB extends ECSY.Component<any> {}
 
-    const sut = new SocketSession();
+    const world = new ECSY.World();
+    const sut = new SocketSession(world);
 
     sut.allowComponent("a", ComponentA);
     sut.allowComponent("b", ComponentB);
@@ -82,7 +82,7 @@ describe("SocketSession", () => {
     expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
   });
 
-  test("getUpdates + _handleUpdates", () => {
+  test("_getOutgoing + _handleIncoming", () => {
     class ComponentA extends ECSY.Component<any> {
       value?: number;
     }
@@ -95,45 +95,68 @@ describe("SocketSession", () => {
       .createEntity("a")
       .addComponent(ComponentA, { value: 1 })
       .addComponent(ComponentB, { value: 2 });
-    const sut = new SocketSession();
+    const sut = new SocketSession(world);
 
     sut.allowComponent("aComponent", ComponentA);
     sut.registerEntity("anEntity", entityA);
 
-    expect(sut.getUpdates()).toEqual({
+    expect(sut._getOutgoing()).toEqual({
       anEntity: {
         aComponent: { value: 1 },
       },
     });
 
-    expect(sut.getUpdates()).toEqual({});
+    expect(sut._getOutgoing()).toEqual({});
 
     const component = entityA?.getMutableComponent(ComponentA);
     if (component) {
       component.value = 2;
     }
 
-    expect(sut.getUpdates()).toEqual({
+    expect(sut._getOutgoing()).toEqual({
       anEntity: {
         aComponent: { value: 2 },
       },
     });
 
-    sut._handleUpdates({
+    sut._handleIncoming({
       body: {
         anEntity: {
-          aComponent: { value: 5 }
-        }
-      }
-    })
+          aComponent: { value: 5 },
+        },
+      },
+    });
 
-    expect(sut.getUpdates()).toEqual({});
+    // Updates that were just recieved shouldn't be included in outgoing
+    // updates
+    expect(sut._getOutgoing()).toEqual({});
     expect(component?.value).toBe(5);
+
+    // Create entities
+    // sut._handleIncoming({
+    //   body: {
+    //     anEntity: {
+    //       aComponent: { value: 5 },
+    //     },
+    //     anotherEntity: {
+    //       aComponent: { value: 6 },
+    //     },
+    //   },
+    // });
+
+    // expect(listEntityIds(sut)).toEqual(['anEntity', 'anotherEntity']);
+    // const anotherEntity = sut.getEntityById('anotherEntity');
+    // expect(anotherEntity?.getComponent(ComponentA)?.value).toBe(6);
+
+    // Add components
+    // Remove entities
+    // Remove components
   });
 
   test("connect + pushUpdates", () => {
-    const sut = new SocketSession();
-    spyOn(sut, "getUpdates").and.returnValue({
+    const world = new ECSY.World();
+    const sut = new SocketSession(world);
+    spyOn(sut, "_getOutgoing").and.returnValue({
       anEntity: {
         aComponent: {
           value: 1,
@@ -147,9 +170,10 @@ describe("SocketSession", () => {
     expect(sut._socket?.connect).toHaveBeenCalledTimes(1);
     expect(sut._socket?.channel).toHaveBeenCalledTimes(1);
     expect(sut._socket?.channel).toHaveBeenCalledWith("seance");
-    expect(sut._channel?.on).toHaveBeenCalledWith("update_entities", sut._handleUpdates);
-    expect(sut._channel?.on).toHaveBeenCalledWith("presence_state", sut._handlePresenceState);
-    expect(sut._channel?.on).toHaveBeenCalledWith("presence_diff", sut._handlePresenceDiff);
+    expect(sut._channel?.on).toHaveBeenCalledWith(
+      "update_entities",
+      sut._handleIncoming
+    );
 
     // Should not recreate socket/channel if exists already
     sut.connect("seance");
