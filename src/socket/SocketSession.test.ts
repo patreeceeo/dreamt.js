@@ -32,18 +32,18 @@ describe("SocketSession", () => {
     expect(listEntityIds(sut)).toEqual([]);
     expect(listEntities(sut)).toEqual([]);
 
-    sut.setEntityById("A", entityA);
-    sut.setEntityById("B", entityB);
+    sut.registerEntity("A", entityA);
+    sut.registerEntity("B", entityB);
 
     expect(sut.getEntityById("A")).toBe(entityA);
     expect(sut.getEntityById("B")).toBe(entityB);
     expect(listEntityIds(sut)).toEqual(["A", "B"]);
     expect(listEntities(sut)).toEqual([entityA, entityB]);
 
-    sut.removeEntityById("A");
+    sut.unregisterEntity("A");
     expect(listEntityIds(sut)).toEqual(["B"]);
     expect(listEntities(sut)).toEqual([entityB]);
-    sut.removeEntityById("B");
+    sut.unregisterEntity("B");
 
     expect(sut.getEntityById("A")).not.toBeDefined();
     expect(sut.getEntityById("B")).not.toBeDefined();
@@ -82,7 +82,7 @@ describe("SocketSession", () => {
     expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
   });
 
-  test("getUpdates", () => {
+  test("getUpdates + _handleUpdates", () => {
     class ComponentA extends ECSY.Component<any> {
       value?: number;
     }
@@ -98,7 +98,7 @@ describe("SocketSession", () => {
     const sut = new SocketSession();
 
     sut.allowComponent("aComponent", ComponentA);
-    sut.setEntityById("anEntity", entityA);
+    sut.registerEntity("anEntity", entityA);
 
     expect(sut.getUpdates()).toEqual({
       anEntity: {
@@ -118,6 +118,17 @@ describe("SocketSession", () => {
         aComponent: { value: 2 },
       },
     });
+
+    sut._handleUpdates({
+      body: {
+        anEntity: {
+          aComponent: { value: 5 }
+        }
+      }
+    })
+
+    expect(sut.getUpdates()).toEqual({});
+    expect(component?.value).toBe(5);
   });
 
   test("connect + pushUpdates", () => {
@@ -132,22 +143,23 @@ describe("SocketSession", () => {
 
     sut.connect("seance");
 
-    expect(sut.socket?.endPointURL()).toEqual("/socket");
-    expect(sut.socket?.connect).toHaveBeenCalledTimes(1);
-    expect(sut.socket?.channel).toHaveBeenCalledTimes(1);
-    expect(sut.socket?.channel).toHaveBeenCalledWith("seance");
+    expect(sut._socket?.endPointURL()).toEqual("/socket");
+    expect(sut._socket?.connect).toHaveBeenCalledTimes(1);
+    expect(sut._socket?.channel).toHaveBeenCalledTimes(1);
+    expect(sut._socket?.channel).toHaveBeenCalledWith("seance");
+    expect(sut._channel?.on).toHaveBeenCalledWith("update_entities", sut._handleUpdates);
+    expect(sut._channel?.on).toHaveBeenCalledWith("presence_state", sut._handlePresenceState);
+    expect(sut._channel?.on).toHaveBeenCalledWith("presence_diff", sut._handlePresenceDiff);
 
     // Should not recreate socket/channel if exists already
     sut.connect("seance");
 
-    cast<jest.Mock>(sut.socket?.channel).mockReset();
-    expect(sut.socket?.channel).toHaveBeenCalledTimes(0);
+    cast<jest.Mock>(sut._socket?.channel).mockReset();
+    expect(sut._socket?.channel).toHaveBeenCalledTimes(0);
 
-    // Sends data over the socket representing changes since last call
-    // WRT the allowed components of all registered entities
     sut.pushUpdates();
-    expect(sut.channel?.push).toHaveBeenCalledTimes(1);
-    expect(sut.channel?.push).toHaveBeenCalledWith("update_entities", {
+    expect(sut._channel?.push).toHaveBeenCalledTimes(1);
+    expect(sut._channel?.push).toHaveBeenCalledWith("update_entities", {
       body: {
         anEntity: {
           aComponent: { value: 1 },

@@ -18,4 +18,5 @@ export class Socket {
 
 class Channel {
   push = jest.fn();
+  on = jest.fn();
 }
