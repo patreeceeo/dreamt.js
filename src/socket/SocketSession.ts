@@ -109,6 +109,8 @@ class SocketSession {
         // therefore the same across all clients
         if (entity?.hasComponent(Component)) {
           updateComponent(entity, Component!, componentData.value);
+        } else if(entity) {
+          entity.addComponent(Component, componentData);
         } else {
           const newEntity = this._world
             .createEntity(entityId)

@@ -27,6 +27,7 @@ test("updateComponent", () => {
   const valueBefore = cast<any>(entity.getComponent(Component)).value;
   const answerBefore = cast<any>(entity.getComponent(AnswerComponent)).answer;
 
+  // TODO simplify this API
   updateComponent(entity, Component, 43);
   updateComponent(entity, AnswerComponent, {answer: 43}, true);
   updateComponent(entity, BogusComponent, "hjkl", true);

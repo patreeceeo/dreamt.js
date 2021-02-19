@@ -87,6 +87,9 @@ describe("SocketSession", () => {
       value?: number;
     }
     class ComponentB extends ECSY.Component<any> {}
+    class ComponentC extends ECSY.Component<any> {
+      value?: string;
+    }
 
     const world = new ECSY.World()
       .registerComponent(ComponentA)
@@ -98,6 +101,7 @@ describe("SocketSession", () => {
     const sut = new SocketSession(world);
 
     sut.allowComponent("aComponent", ComponentA);
+    sut.allowComponent("anotherComponent", ComponentC);
     sut.registerEntity("anEntity", entityA);
 
     expect(sut._getOutgoing()).toEqual({
@@ -149,6 +153,20 @@ describe("SocketSession", () => {
     expect(anotherEntity?.getComponent(ComponentA)?.value).toBe(6);
 
     // Add components
+    sut._handleIncoming({
+      body: {
+        anEntity: {
+          aComponent: { value: 5 },
+        },
+        anotherEntity: {
+          aComponent: { value: 6 },
+          anotherComponent: { value: "Boo!" }
+        },
+      },
+    });
+
+    expect(anotherEntity?.getComponent(ComponentC)?.value).toBe("Boo!");
+    expect(sut._getOutgoing()).toEqual({});
     // Remove entities
     // Remove components
   });
