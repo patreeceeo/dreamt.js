@@ -7,6 +7,8 @@ import { updateComponent } from "../ecsExtensions";
 interface IEntityComponentState {
   [entityId: string]: {
     [componentId: string]: {
+      // TODO allow any shape, perhaps by adding an optional comparator
+      // parameter somewhere...
       value: any;
     };
   };
@@ -85,6 +87,8 @@ class NetworkTransporter {
         }
       }
     }
+    // TODO move to pushUpdates and pass _lastKnownState as a formal parameter
+    // also rename to getDifference and make it a function?
     this._lastKnownState = result;
     return result;
   }
@@ -98,7 +102,7 @@ class NetworkTransporter {
    */
   _handleIncoming(message: IUpdateEntitiesMessage) {
     const path = ["", ""];
-    const mentions = {};
+    const mentions: IEntityComponentState = {};
     const updates = message.body;
     Object.entries(updates).forEach(([entityId, entityData]) => {
       path[0] = entityId;
@@ -126,13 +130,19 @@ class NetworkTransporter {
 
     for (const [entityId, entity] of this.getEntityIterator()) {
       path[0] = entityId;
-      for (const [
-        componentId,
-        Component,
-      ] of this.getAllowedComponentIterator()) {
-        path[1] = componentId;
-        if(!get(mentions, path)) {
-          entity.removeComponent(Component);
+
+      if(!mentions[entityId]) {
+        entity.remove();
+        this.unregisterEntity(entityId);
+      } else {
+        for (const [
+          componentId,
+          Component,
+        ] of this.getAllowedComponentIterator()) {
+          path[1] = componentId;
+          if(!get(mentions, path)) {
+            entity.removeComponent(Component);
+          }
         }
       }
     }

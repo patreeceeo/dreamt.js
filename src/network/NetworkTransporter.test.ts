@@ -182,7 +182,19 @@ describe("NetworkTransporter", () => {
 
     expect(anotherEntity?.hasComponent(ComponentA)).toBe(false);
     expect(sut._getOutgoing()).toEqual({});
+
+    cast<jest.Mock>(entityA.remove).mockReset()
     // Remove entities
+    sut._handleIncoming({
+      body: {
+        anotherEntity: {
+          anotherComponent: { value: "Boo!" }
+        },
+      },
+    });
+
+    expect(entityA.remove).toHaveBeenCalledTimes(1);
+    expect(sut._getOutgoing()).toEqual({});
   });
 
   test("connect + pushUpdates", () => {
