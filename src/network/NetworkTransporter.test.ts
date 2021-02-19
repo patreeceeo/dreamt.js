@@ -21,6 +21,10 @@ function listEntities(sut: NetworkTransporter) {
   return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
 }
 
+function diffLastPush(sut: NetworkTransporter) {
+  return sut.getDifference(sut._lastKnownState);
+}
+
 describe("NetworkTransporter", () => {
   test("set/get/removeEntityById + getEntityIterator", () => {
     const world = new ECSY.World();
@@ -104,20 +108,18 @@ describe("NetworkTransporter", () => {
     sut.allowComponent("anotherComponent", ComponentC);
     sut.registerEntity("anEntity", entityA);
 
-    expect(sut._getOutgoing()).toEqual({
+    expect(diffLastPush(sut)).toEqual({
       anEntity: {
         aComponent: { value: 1 },
       },
     });
-
-    expect(sut._getOutgoing()).toEqual({});
 
     const component = entityA?.getMutableComponent(ComponentA);
     if (component) {
       component.value = 2;
     }
 
-    expect(sut._getOutgoing()).toEqual({
+    expect(diffLastPush(sut)).toEqual({
       anEntity: {
         aComponent: { value: 2 },
       },
@@ -133,7 +135,7 @@ describe("NetworkTransporter", () => {
 
     // Updates that were just recieved shouldn't be included in outgoing
     // updates
-    expect(sut._getOutgoing()).toEqual({});
+    expect(diffLastPush(sut)).toEqual({});
     expect(component?.value).toBe(5);
 
     // Create entities
@@ -166,7 +168,7 @@ describe("NetworkTransporter", () => {
     });
 
     expect(anotherEntity?.getComponent(ComponentC)?.value).toBe("Boo!");
-    expect(sut._getOutgoing()).toEqual({});
+    expect(diffLastPush(sut)).toEqual({});
 
     // Remove components
     sut._handleIncoming({
@@ -181,10 +183,10 @@ describe("NetworkTransporter", () => {
     });
 
     expect(anotherEntity?.hasComponent(ComponentA)).toBe(false);
-    expect(sut._getOutgoing()).toEqual({});
+    expect(diffLastPush(sut)).toEqual({});
 
-    cast<jest.Mock>(entityA.remove).mockReset()
     // Remove entities
+    cast<jest.Mock>(entityA.remove).mockReset()
     sut._handleIncoming({
       body: {
         anotherEntity: {
@@ -194,13 +196,13 @@ describe("NetworkTransporter", () => {
     });
 
     expect(entityA.remove).toHaveBeenCalledTimes(1);
-    expect(sut._getOutgoing()).toEqual({});
+    expect(diffLastPush(sut)).toEqual({});
   });
 
-  test("connect + pushUpdates", () => {
+  test("connect + pushDifference", () => {
     const world = new ECSY.World();
     const sut = new NetworkTransporter(world);
-    spyOn(sut, "_getOutgoing").and.returnValue({
+    spyOn(sut, "getDifference").and.returnValue({
       anEntity: {
         aComponent: {
           value: 1,
@@ -225,7 +227,7 @@ describe("NetworkTransporter", () => {
     cast<jest.Mock>(sut._socket?.channel).mockReset();
     expect(sut._socket?.channel).toHaveBeenCalledTimes(0);
 
-    sut.pushUpdates();
+    sut.pushDifference();
     expect(sut._channel?.push).toHaveBeenCalledTimes(1);
     expect(sut._channel?.push).toHaveBeenCalledWith("update_entities", {
       body: {

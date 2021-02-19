@@ -71,8 +71,8 @@ class NetworkTransporter {
    * their allow-listed components. Assumes that its return value will be
    * immediately and reliably sent over the socket.
    */
-  _getOutgoing(): IEntityComponentState {
-    const result: IEntityComponentState = {};
+  getDifference(input: IEntityComponentState): IEntityComponentState {
+    const output: IEntityComponentState = {};
     const path = ["", "", "value"];
     for (const [entityId, entity] of this.getEntityIterator()) {
       path[0] = entityId;
@@ -82,15 +82,12 @@ class NetworkTransporter {
       ] of this.getAllowedComponentIterator()) {
         const currentValue = (entity.getComponent(Component) as any)?.value;
         path[1] = componentId;
-        if (get(this._lastKnownState, path) !== currentValue) {
-          set(result, path, currentValue);
+        if (get(input, path) !== currentValue) {
+          set(output, path, currentValue);
         }
       }
     }
-    // TODO move to pushUpdates and pass _lastKnownState as a formal parameter
-    // also rename to getDifference and make it a function?
-    this._lastKnownState = result;
-    return result;
+    return output;
   }
 
   /**
@@ -134,6 +131,7 @@ class NetworkTransporter {
       if(!mentions[entityId]) {
         entity.remove();
         this.unregisterEntity(entityId);
+        delete this._lastKnownState[entityId];
       } else {
         for (const [
           componentId,
@@ -142,6 +140,7 @@ class NetworkTransporter {
           path[1] = componentId;
           if(!get(mentions, path)) {
             entity.removeComponent(Component);
+            delete this._lastKnownState[entityId][componentId];
           }
         }
       }
@@ -152,11 +151,12 @@ class NetworkTransporter {
    * Send data over the socket representing changes since last call
    * WRT the allow-listed components of all registered entities.
    */
-  pushUpdates() {
+  pushDifference() {
     if (this._channel) {
-      const updates = this._getOutgoing();
+      const diff = this.getDifference(this._lastKnownState);
+      this._lastKnownState = diff;
       const message: IUpdateEntitiesMessage = {
-        body: updates,
+        body: diff,
       };
       this._channel.push("update_entities", message);
     }
