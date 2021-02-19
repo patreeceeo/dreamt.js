@@ -9,6 +9,11 @@ export class Entity implements IEntity {
     return cast<RealEntity>(this);
   });
 
+  removeComponent(Class: RealComponentConstructor<any>) {
+    delete this._components[Class.name];
+    return cast<RealEntity>(this);
+  }
+
   getComponent = cast<RealEntity["getComponent"]>((C: RealComponentConstructor<any>) => {
     return this._components[C.name];
   })

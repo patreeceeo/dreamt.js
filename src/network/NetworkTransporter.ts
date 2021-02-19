@@ -98,6 +98,7 @@ class NetworkTransporter {
    */
   _handleIncoming(message: IUpdateEntitiesMessage) {
     const path = ["", ""];
+    const mentions = {};
     const updates = message.body;
     Object.entries(updates).forEach(([entityId, entityData]) => {
       path[0] = entityId;
@@ -106,7 +107,8 @@ class NetworkTransporter {
         const entity = this.getEntityById(entityId);
         const Component = this.getComponentById(componentId)!;
         // TODO invariant(Component) since component types should be static,
-        // therefore the same across all clients
+        // therefore the same across all clients. But what if components are
+        // allow-listed conditionally?
         if (entity?.hasComponent(Component)) {
           updateComponent(entity, Component!, componentData);
         } else if(entity) {
@@ -118,8 +120,22 @@ class NetworkTransporter {
           this.registerEntity(entityId, newEntity);
         }
         set(this._lastKnownState, path, componentData);
+        set(mentions, path, true);
       });
     });
+
+    for (const [entityId, entity] of this.getEntityIterator()) {
+      path[0] = entityId;
+      for (const [
+        componentId,
+        Component,
+      ] of this.getAllowedComponentIterator()) {
+        path[1] = componentId;
+        if(!get(mentions, path)) {
+          entity.removeComponent(Component);
+        }
+      }
+    }
   }
 
   /**

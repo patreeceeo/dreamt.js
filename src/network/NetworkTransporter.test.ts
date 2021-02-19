@@ -167,8 +167,22 @@ describe("NetworkTransporter", () => {
 
     expect(anotherEntity?.getComponent(ComponentC)?.value).toBe("Boo!");
     expect(sut._getOutgoing()).toEqual({});
-    // Remove entities
+
     // Remove components
+    sut._handleIncoming({
+      body: {
+        anEntity: {
+          aComponent: { value: 5 },
+        },
+        anotherEntity: {
+          anotherComponent: { value: "Boo!" }
+        },
+      },
+    });
+
+    expect(anotherEntity?.hasComponent(ComponentA)).toBe(false);
+    expect(sut._getOutgoing()).toEqual({});
+    // Remove entities
   });
 
   test("connect + pushUpdates", () => {
