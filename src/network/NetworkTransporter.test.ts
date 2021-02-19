@@ -1,4 +1,4 @@
-import SocketSession from "./SocketSession";
+import NetworkTransporter from "./NetworkTransporter";
 import * as ECSY from "ecsy";
 import { cast } from "../testUtils";
 
@@ -13,18 +13,18 @@ function iterableToArray<I, A = I>(
   return list;
 }
 
-function listEntityIds(sut: SocketSession) {
+function listEntityIds(sut: NetworkTransporter) {
   return iterableToArray(sut.getEntityIterator(), (entry) => entry[0]);
 }
 
-function listEntities(sut: SocketSession) {
+function listEntities(sut: NetworkTransporter) {
   return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
 }
-// TODO rename to Transporter
-describe("SocketSession", () => {
+
+describe("NetworkTransporter", () => {
   test("set/get/removeEntityById + getEntityIterator", () => {
     const world = new ECSY.World();
-    const sut = new SocketSession(world);
+    const sut = new NetworkTransporter(world);
     const entityA = world.createEntity("a");
     const entityB = world.createEntity("b");
 
@@ -51,13 +51,13 @@ describe("SocketSession", () => {
   });
 
   test("(dis)allowComponent + getAllowedComponentIterator", () => {
-    function getAllowedComponentIdList(sut: SocketSession) {
+    function getAllowedComponentIdList(sut: NetworkTransporter) {
       return iterableToArray(
         sut.getAllowedComponentIterator(),
         (entry) => entry[0]
       );
     }
-    function getAllowedComponentList(sut: SocketSession) {
+    function getAllowedComponentList(sut: NetworkTransporter) {
       return iterableToArray(
         sut.getAllowedComponentIterator(),
         (entry) => entry[1]
@@ -68,7 +68,7 @@ describe("SocketSession", () => {
     class ComponentB extends ECSY.Component<any> {}
 
     const world = new ECSY.World();
-    const sut = new SocketSession(world);
+    const sut = new NetworkTransporter(world);
 
     sut.allowComponent("a", ComponentA);
     sut.allowComponent("b", ComponentB);
@@ -98,7 +98,7 @@ describe("SocketSession", () => {
       .createEntity("a")
       .addComponent(ComponentA, { value: 1 })
       .addComponent(ComponentB, { value: 2 });
-    const sut = new SocketSession(world);
+    const sut = new NetworkTransporter(world);
 
     sut.allowComponent("aComponent", ComponentA);
     sut.allowComponent("anotherComponent", ComponentC);
@@ -173,7 +173,7 @@ describe("SocketSession", () => {
 
   test("connect + pushUpdates", () => {
     const world = new ECSY.World();
-    const sut = new SocketSession(world);
+    const sut = new NetworkTransporter(world);
     spyOn(sut, "_getOutgoing").and.returnValue({
       anEntity: {
         aComponent: {

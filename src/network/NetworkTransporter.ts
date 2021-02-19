@@ -16,7 +16,7 @@ interface IUpdateEntitiesMessage {
   body: IEntityComponentState;
 }
 
-class SocketSession {
+class NetworkTransporter {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
   _socket: PHX.Socket | null = null;
@@ -146,4 +146,4 @@ class SocketSession {
   }
 }
 
-export default SocketSession;
+export default NetworkTransporter;
