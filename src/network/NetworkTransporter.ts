@@ -108,7 +108,7 @@ class NetworkTransporter {
         // TODO invariant(Component) since component types should be static,
         // therefore the same across all clients
         if (entity?.hasComponent(Component)) {
-          updateComponent(entity, Component!, componentData.value);
+          updateComponent(entity, Component!, componentData);
         } else if(entity) {
           entity.addComponent(Component, componentData);
         } else {

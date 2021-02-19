@@ -1,7 +1,5 @@
 import * as ECSY from "ecsy";
-import {cast} from './testUtils';
 import logger from './logger';
-import { Intersection } from 'utility-types';
 
 export function addComponent<T>(entity: ECSY.Entity, Component: ECSY.ComponentConstructor<ECSY.Component<T>>, data?: T) {
   if (data !== undefined) {
@@ -26,21 +24,14 @@ export function replaceComponent<T>(
   addComponent(entity, Component, data);
 }
 
-interface IStandardComponentContents {value: any};
-
-export function updateComponent<T extends {} = IStandardComponentContents>(
+export function updateComponent<T extends {}>(
   entity: ECSY.Entity,
   Component: ECSY.ComponentConstructor<ECSY.Component<T>>,
-  data: T | Intersection<T, IStandardComponentContents>,
-  nonStandardContents?: boolean
+  data: T,
 ) {
   if (entity.hasComponent(Component)) {
     const component = entity.getMutableComponent(Component);
-    if(!nonStandardContents) {
-      cast<IStandardComponentContents>(component).value = data;
-    } else {
-      Object.assign(component, data);
-    }
+    Object.assign(component, data);
   } else {
     logger.warn(`Tried to update component ${Component.name} on ${entity.constructor.name}#${entity.id} which does not exist. Data:`, data);
   }
