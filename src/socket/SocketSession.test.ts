@@ -133,20 +133,20 @@ describe("SocketSession", () => {
     expect(component?.value).toBe(5);
 
     // Create entities
-    // sut._handleIncoming({
-    //   body: {
-    //     anEntity: {
-    //       aComponent: { value: 5 },
-    //     },
-    //     anotherEntity: {
-    //       aComponent: { value: 6 },
-    //     },
-    //   },
-    // });
+    sut._handleIncoming({
+      body: {
+        anEntity: {
+          aComponent: { value: 5 },
+        },
+        anotherEntity: {
+          aComponent: { value: 6 },
+        },
+      },
+    });
 
-    // expect(listEntityIds(sut)).toEqual(['anEntity', 'anotherEntity']);
-    // const anotherEntity = sut.getEntityById('anotherEntity');
-    // expect(anotherEntity?.getComponent(ComponentA)?.value).toBe(6);
+    expect(listEntityIds(sut)).toEqual(['anEntity', 'anotherEntity']);
+    const anotherEntity = sut.getEntityById('anotherEntity');
+    expect(anotherEntity?.getComponent(ComponentA)?.value).toBe(6);
 
     // Add components
     // Remove entities
