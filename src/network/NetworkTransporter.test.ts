@@ -1,6 +1,10 @@
-import NetworkTransporter from "./NetworkTransporter";
+import NetworkTransporter, {
+  IEntityComponentDiff,
+  IUpdateEntitiesMessage,
+} from "./NetworkTransporter";
 import * as ECSY from "ecsy";
 import { cast } from "../testUtils";
+import { updateComponent } from "../ecsExtensions";
 
 function iterableToArray<I, A = I>(
   it: Iterable<I>,
@@ -21,14 +25,27 @@ function listEntities(sut: NetworkTransporter) {
   return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
 }
 
-function diffLastPush(sut: NetworkTransporter) {
-  return sut.getDifference(sut._lastKnownState);
+function constructSut(
+  world: ECSY.World,
+  pushMessage = (messageType: string, m: IUpdateEntitiesMessage) => {
+    void messageType, m;
+  },
+  addHandler = (
+    messageType: string,
+    handler = (m: IUpdateEntitiesMessage) => {
+      void m;
+    }
+  ) => {
+    void handler, messageType;
+  }
+) {
+  return new NetworkTransporter(world, pushMessage, addHandler);
 }
 
 describe("NetworkTransporter", () => {
   test("set/get/removeEntityById + getEntityIterator", () => {
     const world = new ECSY.World();
-    const sut = new NetworkTransporter(world);
+    const sut = constructSut(world);
     const entityA = world.createEntity("a");
     const entityB = world.createEntity("b");
 
@@ -72,7 +89,7 @@ describe("NetworkTransporter", () => {
     class ComponentB extends ECSY.Component<any> {}
 
     const world = new ECSY.World();
-    const sut = new NetworkTransporter(world);
+    const sut = constructSut(world);
 
     sut.allowComponent("a", ComponentA);
     sut.allowComponent("b", ComponentB);
@@ -86,154 +103,308 @@ describe("NetworkTransporter", () => {
     expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
   });
 
-  test("_getOutgoing + _handleIncoming", () => {
-    class ComponentA extends ECSY.Component<any> {
+  test("getDiff + _handleIncoming", () => {
+    class NumComponent extends ECSY.Component<any> {
       value?: number;
     }
-    class ComponentB extends ECSY.Component<any> {}
-    class ComponentC extends ECSY.Component<any> {
+    class ExcludedComponent extends ECSY.Component<any> {}
+    class StrComponent extends ECSY.Component<any> {
       value?: string;
     }
 
     const world = new ECSY.World()
-      .registerComponent(ComponentA)
-      .registerComponent(ComponentB);
-    const entityA = world
+      .registerComponent(NumComponent)
+      .registerComponent(ExcludedComponent);
+    const sut = constructSut(world);
+
+    // TODO find a way to DRY this test
+
+    /*** CREATE ENTITY ***/
+
+    // Create original entity
+    const anEntity = world
       .createEntity("a")
-      .addComponent(ComponentA, { value: 1 })
-      .addComponent(ComponentB, { value: 2 });
-    const sut = new NetworkTransporter(world);
+      .addComponent(NumComponent, { value: 1 })
+      .addComponent(ExcludedComponent, { value: 2 });
+    sut.registerEntity("anEntity", anEntity);
+    sut.allowComponent("numero", NumComponent);
+    sut.allowComponent("varchar", StrComponent);
 
-    sut.allowComponent("aComponent", ComponentA);
-    sut.allowComponent("anotherComponent", ComponentC);
-    sut.registerEntity("anEntity", entityA);
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {
+        anEntity: {
+          numero: { value: 1 },
+        },
+      },
+      remove: {},
+    } as IEntityComponentDiff);
 
-    expect(diffLastPush(sut)).toEqual({
+    // Duplicate entity from incoming message
+    sut._handleIncoming({
+      body: {
+        upsert: {
+          anotherEntity: {
+            numero: { value: 6 },
+          },
+        },
+        remove: {},
+      },
+    });
+
+    const anotherEntity = sut.getEntityById("anotherEntity");
+    expect(anotherEntity?.getComponent(NumComponent)?.value).toBe(6);
+    // So it knows not to send this back
+    expect(sut._serverWorldModel).toEqual({
+      anotherEntity: {
+        numero: { value: 6 },
+      },
+    });
+
+    // Should add locally created entity to _serverWorldModel
+    sut.pushDiff();
+    expect(sut._serverWorldModel).toEqual({
       anEntity: {
-        aComponent: { value: 1 },
+        numero: { value: 1 },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
       },
     });
 
-    const component = entityA?.getMutableComponent(ComponentA);
-    if (component) {
-      component.value = 2;
-    }
+    /*** ADD COMPONENT ***/
 
-    expect(diffLastPush(sut)).toEqual({
+    // Originate adding of a component
+    anEntity.addComponent(StrComponent, { value: "Hai!" });
+
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {
+        anEntity: {
+          varchar: { value: "Hai!" },
+        },
+      },
+      remove: {},
+    } as IEntityComponentDiff);
+
+    // Add component in response to incoming message
+    sut._handleIncoming({
+      body: {
+        upsert: {
+          anotherEntity: {
+            varchar: { value: "Boo!" },
+          },
+        },
+        remove: {},
+      },
+    });
+
+    expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Boo!");
+    // So it knows not to send this back
+    expect(sut._serverWorldModel).toEqual({
       anEntity: {
-        aComponent: { value: 2 },
+        numero: { value: 1 },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+        varchar: { value: "Boo!" },
       },
     });
 
-    sut._handleIncoming({
-      body: {
+    sut.pushDiff();
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
+        varchar: { value: "Hai!" },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+        varchar: { value: "Boo!" },
+      },
+    });
+
+    /*** UPDATE COMPONENT ***/
+
+    // Originate update of a component
+    updateComponent(anEntity, StrComponent, { value: "Bai!" });
+
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {
         anEntity: {
-          aComponent: { value: 5 },
+          varchar: { value: "Bai!" },
         },
+      },
+      remove: {},
+    } as IEntityComponentDiff);
+
+    // Update component in response to incoming message
+    sut._handleIncoming({
+      body: {
+        upsert: {
+          anotherEntity: {
+            varchar: { value: "Ahh!" },
+          },
+        },
+        remove: {},
       },
     });
 
-    // Updates that were just recieved shouldn't be included in outgoing
-    // updates
-    expect(diffLastPush(sut)).toEqual({});
-    expect(component?.value).toBe(5);
+    expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Ahh!");
+    // So it knows not to send this back
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
+        varchar: { value: "Hai!" },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+        varchar: { value: "Ahh!" },
+      },
+    });
 
-    // Create entities
-    sut._handleIncoming({
-      body: {
+    sut.pushDiff();
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
+        varchar: { value: "Bai!" },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+        varchar: { value: "Ahh!" },
+      },
+    });
+
+    /*** REMOVE COMPONENT ***/
+
+    // Originate removal of component
+    anEntity.removeComponent(StrComponent);
+
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {},
+      remove: {
         anEntity: {
-          aComponent: { value: 5 },
-        },
-        anotherEntity: {
-          aComponent: { value: 6 },
+          varchar: true,
         },
       },
     });
 
-    expect(listEntityIds(sut)).toEqual(['anEntity', 'anotherEntity']);
-    const anotherEntity = sut.getEntityById('anotherEntity');
-    expect(anotherEntity?.getComponent(ComponentA)?.value).toBe(6);
-
-    // Add components
+    // Remove component in response to incoming message
     sut._handleIncoming({
       body: {
-        anEntity: {
-          aComponent: { value: 5 },
-        },
-        anotherEntity: {
-          aComponent: { value: 6 },
-          anotherComponent: { value: "Boo!" }
+        upsert: {},
+        remove: {
+          anotherEntity: {
+            varchar: true,
+          },
         },
       },
     });
 
-    expect(anotherEntity?.getComponent(ComponentC)?.value).toBe("Boo!");
-    expect(diffLastPush(sut)).toEqual({});
+    expect(anotherEntity?.hasComponent(StrComponent)).toBe(false);
+    // So it knows not to send this back
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
+        varchar: { value: "Bai!" },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+      },
+    });
 
-    // Remove components
+    sut.pushDiff();
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
+      },
+      anotherEntity: {
+        numero: { value: 6 },
+      },
+    });
+
+    /*** REMOVE ENTITY ***/
+
+    // Originate removal of entity
+    anEntity.remove();
+
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {},
+      remove: {
+        anEntity: true,
+      },
+    });
+
+    // Remove entity in response to incoming message
+    cast<jest.Mock>(anotherEntity?.remove).mockClear();
     sut._handleIncoming({
       body: {
-        anEntity: {
-          aComponent: { value: 5 },
-        },
-        anotherEntity: {
-          anotherComponent: { value: "Boo!" }
+        upsert: {},
+        remove: {
+          anotherEntity: true,
         },
       },
     });
 
-    expect(anotherEntity?.hasComponent(ComponentA)).toBe(false);
-    expect(diffLastPush(sut)).toEqual({});
-
-    // Remove entities
-    cast<jest.Mock>(entityA.remove).mockReset()
-    sut._handleIncoming({
-      body: {
-        anotherEntity: {
-          anotherComponent: { value: "Boo!" }
-        },
+    expect(anotherEntity?.remove).toHaveBeenCalledTimes(1);
+    // So it knows not to send this back
+    expect(sut._serverWorldModel).toEqual({
+      anEntity: {
+        numero: { value: 1 },
       },
     });
 
-    expect(entityA.remove).toHaveBeenCalledTimes(1);
-    expect(diffLastPush(sut)).toEqual({});
+    sut.pushDiff();
+    expect(sut._serverWorldModel).toEqual({});
   });
 
-  test("connect + pushDifference", () => {
+  test("getDiffToBePushed", () => {
+    // it calls getDiff with _networkWorldModel and returns the result
     const world = new ECSY.World();
-    const sut = new NetworkTransporter(world);
-    spyOn(sut, "getDifference").and.returnValue({
-      anEntity: {
-        aComponent: {
-          value: 1,
-        },
-      },
-    });
+    const sut = constructSut(world);
 
-    sut.connect("seance");
+    sut._serverWorldModel = {};
+    spyOn(sut, "getDiff").and.callFake((x) => x);
 
-    expect(sut._socket?.endPointURL()).toEqual("/socket");
-    expect(sut._socket?.connect).toHaveBeenCalledTimes(1);
-    expect(sut._socket?.channel).toHaveBeenCalledTimes(1);
-    expect(sut._socket?.channel).toHaveBeenCalledWith("seance");
-    expect(sut._channel?.on).toHaveBeenCalledWith(
+    const result = sut.getDiffToBePushed();
+    expect(result).toBe(sut._serverWorldModel);
+  });
+
+  test("adding message handler", () => {
+    const world = new ECSY.World();
+    const addHandler = jest.fn();
+    const sut = new NetworkTransporter(world, () => {}, addHandler);
+
+    expect(addHandler).toHaveBeenCalledWith(
       "update_entities",
       sut._handleIncoming
     );
+  });
 
-    // Should not recreate socket/channel if exists already
-    sut.connect("seance");
-
-    cast<jest.Mock>(sut._socket?.channel).mockReset();
-    expect(sut._socket?.channel).toHaveBeenCalledTimes(0);
-
-    sut.pushDifference();
-    expect(sut._channel?.push).toHaveBeenCalledTimes(1);
-    expect(sut._channel?.push).toHaveBeenCalledWith("update_entities", {
-      body: {
+  test("pushDiff", () => {
+    const world = new ECSY.World();
+    const pushMessage = jest.fn();
+    const sut = new NetworkTransporter(world, pushMessage, () => {});
+    spyOn(sut, "getDiffToBePushed").and.returnValue({
+      upsert: {
         anEntity: {
-          aComponent: { value: 1 },
+          aComponent: {
+            value: 1,
+          },
         },
+      },
+      remove: {},
+    } as IEntityComponentDiff);
+
+    sut.pushDiff();
+    expect(pushMessage).toHaveBeenCalledTimes(1);
+    expect(pushMessage).toHaveBeenCalledWith("update_entities", {
+      body: {
+        upsert: {
+          anEntity: {
+            aComponent: {
+              value: 1,
+            },
+          },
+        },
+        remove: {},
       },
     });
   });

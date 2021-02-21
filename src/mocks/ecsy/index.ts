@@ -1,6 +1,7 @@
 import {cast, IWorld, IEntity, RealWorld, RealEntity, RealComponentConstructor} from '../../testUtils';
 
 export class Entity implements IEntity {
+  alive = false;
   _components = {} as {[key: string]: RealComponentConstructor<any>};
 
   addComponent = jest.fn((Class: RealComponentConstructor<any>, data) => {
@@ -24,7 +25,9 @@ export class Entity implements IEntity {
     return !!this._components[C.name];
   }
 
-  remove = jest.fn();
+  remove = jest.fn(() => {
+    this.alive = false;
+  });
 }
 
 
@@ -47,6 +50,7 @@ export class World implements IWorld {
 
   createEntity = jest.fn((name: string) => {
     const entity = new Entity();
+    entity.alive = true;
     this.entities.set(name, entity);
     return cast<RealEntity>(entity);
   })

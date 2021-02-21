@@ -1,10 +1,9 @@
 import * as ECSY from "ecsy";
 import { ComponentConstructor } from "../index";
-import * as PHX from "phoenix";
-import { get, set } from "lodash";
+import { get, set, merge } from "lodash";
 import { updateComponent } from "../ecsExtensions";
 
-interface IEntityComponentState {
+export interface IEntityComponentData {
   [entityId: string]: {
     [componentId: string]: {
       // TODO allow any shape, perhaps by adding an optional comparator
@@ -13,21 +12,58 @@ interface IEntityComponentState {
     };
   };
 }
-
-interface IUpdateEntitiesMessage {
-  body: IEntityComponentState;
+export interface IEntityComponentFlags {
+  [entityId: string]:
+    | boolean
+    | {
+        [componentId: string]: boolean;
+      };
+}
+export interface IEntityComponentDiff {
+  upsert: IEntityComponentData;
+  remove: IEntityComponentFlags;
 }
 
+export interface IUpdateEntitiesMessage {
+  body: IEntityComponentDiff;
+}
+
+/**
+ * TODO rename to WorldSynchronizer?
+ * Responsible for:
+ *
+ * A. Sending to the server operations necessary to bring it up-to-date with
+ * the local `World` instance.
+ * B. Recieving and applying operations from the server.
+ * C. Maintaining its model of entities and components as they exist on the
+ * server. This is done during or after A and B.
+ *
+ * Designed to be used from within a system or game loop. Without any
+ * intervention it will only do B and C. The system or game loop must tell it
+ * when to gather and send updates.
+ *
+ * The system or game loop must also tell it what entities and component types
+ * to care about. It will only send and apply updates to components of those
+ * types on those specific entities.
+ */
 class NetworkTransporter {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
-  _socket: PHX.Socket | null = null;
-  _channel: PHX.Channel | null = null;
-  _lastKnownState: IEntityComponentState = {};
+  _serverWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
+  _pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void;
 
-  constructor(world: ECSY.World) {
+  constructor(
+    world: ECSY.World,
+    pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void,
+    addHandler: (
+      messageType: string,
+      handler: (m: IUpdateEntitiesMessage) => void
+    ) => void
+  ) {
     this._world = world;
+    this._pushMessage = pushMessage;
+    addHandler("update_entities", this._handleIncoming);
   }
 
   registerEntity(id: string, entity: ECSY.Entity) {
@@ -44,6 +80,25 @@ class NetworkTransporter {
 
   getEntityIterator(): Iterable<[string, ECSY.Entity]> {
     return this._entityMap.entries();
+  }
+
+  /** For convenience */
+  createEntity(id: string) {
+    const newEntity = this._world.createEntity(id);
+    this.registerEntity(id, newEntity);
+    return newEntity;
+  }
+
+  /** For convenience */
+  removeEntityById(id: string) {
+    this.getEntityById(id)?.remove();
+    this.unregisterEntity(id);
+  }
+
+  /** For convenience */
+  removeComponentById(entityId: string, componentId: string) {
+    const Component = this.getComponentById(componentId);
+    this.getEntityById(entityId)?.removeComponent(Component!);
   }
 
   /**
@@ -67,12 +122,11 @@ class NetworkTransporter {
   }
 
   /**
-   * Put together data representing the state of local registered entities and
-   * their allow-listed components. Assumes that its return value will be
-   * immediately and reliably sent over the socket.
+   * Should not have side-effects
+   * TODO make this a pure function rather than a method?
    */
-  getDifference(input: IEntityComponentState): IEntityComponentState {
-    const output: IEntityComponentState = {};
+  _getUpserts(input: IEntityComponentData): IEntityComponentData {
+    const output = {};
     const path = ["", "", "value"];
     for (const [entityId, entity] of this.getEntityIterator()) {
       path[0] = entityId;
@@ -82,12 +136,49 @@ class NetworkTransporter {
       ] of this.getAllowedComponentIterator()) {
         const currentValue = (entity.getComponent(Component) as any)?.value;
         path[1] = componentId;
-        if (get(input, path) !== currentValue) {
+        if (get(input, path) !== currentValue && currentValue !== undefined) {
           set(output, path, currentValue);
         }
       }
     }
     return output;
+  }
+
+  /** Should not have side-effects */
+  _getRemoves(input: IEntityComponentData): IEntityComponentFlags {
+    const output: IEntityComponentFlags = {};
+    const path = ["", ""];
+    Object.keys(input).forEach((entityId) => {
+      path[0] = entityId;
+      const entity = this.getEntityById(entityId);
+      if (entity?.alive) {
+        const entityData = input[entityId];
+        Object.keys(entityData).forEach((componentId) => {
+          path[1] = componentId;
+          const Component = this.getComponentById(componentId);
+          if (!entity.hasComponent(Component!)) {
+            set(output, path, true);
+          }
+        });
+      } else {
+        output[entityId] = true;
+      }
+    });
+    return output;
+  }
+
+  /**
+   * Get the operations necessary to bring the network up-to-date with the
+   * local world instance.
+   *
+   * @param input represents the network's world (entities and components)
+   * @returns the operations AKA a diff.
+   */
+  getDiff(input: IEntityComponentData): IEntityComponentDiff {
+    return {
+      upsert: this._getUpserts(input),
+      remove: this._getRemoves(input),
+    };
   }
 
   /**
@@ -99,9 +190,8 @@ class NetworkTransporter {
    */
   _handleIncoming(message: IUpdateEntitiesMessage) {
     const path = ["", ""];
-    const mentions: IEntityComponentState = {};
-    const updates = message.body;
-    Object.entries(updates).forEach(([entityId, entityData]) => {
+    const diff = message.body;
+    Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       path[0] = entityId;
       Object.entries(entityData).forEach(([componentId, componentData]) => {
         path[1] = componentId;
@@ -112,63 +202,61 @@ class NetworkTransporter {
         // allow-listed conditionally?
         if (entity?.hasComponent(Component)) {
           updateComponent(entity, Component!, componentData);
-        } else if(entity) {
+        } else if (entity) {
           entity.addComponent(Component, componentData);
         } else {
-          const newEntity = this._world
-            .createEntity(entityId)
-            .addComponent(Component, componentData);
-          this.registerEntity(entityId, newEntity);
+          this.createEntity(entityId).addComponent(Component, componentData);
         }
-        set(this._lastKnownState, path, componentData);
-        set(mentions, path, true);
       });
     });
 
-    for (const [entityId, entity] of this.getEntityIterator()) {
-      path[0] = entityId;
-
-      if(!mentions[entityId]) {
-        entity.remove();
-        this.unregisterEntity(entityId);
-        delete this._lastKnownState[entityId];
+    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
+      if (entityData === true) {
+        this.removeEntityById(entityId);
       } else {
-        for (const [
-          componentId,
-          Component,
-        ] of this.getAllowedComponentIterator()) {
-          path[1] = componentId;
-          if(!get(mentions, path)) {
-            entity.removeComponent(Component);
-            delete this._lastKnownState[entityId][componentId];
+        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
+          if (shouldBeRemoved) {
+            this.removeComponentById(entityId, componentId);
           }
-        }
+        });
       }
-    }
+    });
+
+    this._applyDiffToServerModel(diff);
+  }
+
+  // TODO make pure
+  _applyDiffToServerModel(diff: IEntityComponentDiff) {
+    merge(this._serverWorldModel, diff.upsert);
+
+    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
+      if (entityData === true) {
+        delete this._serverWorldModel[entityId];
+      } else {
+        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
+          if (shouldBeRemoved) {
+            delete this._serverWorldModel[entityId][componentId];
+          }
+        });
+      }
+    });
+  }
+
+  getDiffToBePushed() {
+    return this.getDiff(this._serverWorldModel);
   }
 
   /**
    * Send data over the socket representing changes since last call
    * WRT the allow-listed components of all registered entities.
    */
-  pushDifference() {
-    if (this._channel) {
-      const diff = this.getDifference(this._lastKnownState);
-      this._lastKnownState = diff;
-      const message: IUpdateEntitiesMessage = {
-        body: diff,
-      };
-      this._channel.push("update_entities", message);
-    }
-  }
-
-  connect(topic: string) {
-    if (!this._socket) {
-      this._socket = new PHX.Socket("/socket");
-      this._socket.connect();
-      this._channel = this._socket.channel(topic);
-      this._channel.on("update_entities", this._handleIncoming);
-    }
+  pushDiff() {
+    const diff = this.getDiffToBePushed();
+    const message: IUpdateEntitiesMessage = {
+      body: diff,
+    };
+    this._pushMessage("update_entities", message);
+    this._applyDiffToServerModel(diff);
   }
 }
 
