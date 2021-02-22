@@ -190,7 +190,7 @@ describe("Synchronizer", () => {
     const anotherEntity = sut.getEntityById("anotherEntity");
     expect(anotherEntity?.getComponent(NumComponent)?.value).toBe(6);
     // So it knows not to send this back
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anotherEntity: {
         numero: { value: 6 },
       },
@@ -198,7 +198,7 @@ describe("Synchronizer", () => {
 
     // Should add locally created entity to _serverWorldModel
     sut.pushDiff();
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
       },
@@ -235,7 +235,7 @@ describe("Synchronizer", () => {
 
     expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Boo!");
     // So it knows not to send this back
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
       },
@@ -246,7 +246,7 @@ describe("Synchronizer", () => {
     });
 
     sut.pushDiff();
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
         varchar: { value: "Hai!" },
@@ -285,7 +285,7 @@ describe("Synchronizer", () => {
 
     expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Ahh!");
     // So it knows not to send this back
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
         varchar: { value: "Hai!" },
@@ -297,7 +297,7 @@ describe("Synchronizer", () => {
     });
 
     sut.pushDiff();
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
         varchar: { value: "Bai!" },
@@ -336,7 +336,7 @@ describe("Synchronizer", () => {
 
     expect(anotherEntity?.hasComponent(StrComponent)).toBe(false);
     // So it knows not to send this back
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
         varchar: { value: "Bai!" },
@@ -347,7 +347,7 @@ describe("Synchronizer", () => {
     });
 
     sut.pushDiff();
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
       },
@@ -381,14 +381,14 @@ describe("Synchronizer", () => {
 
     expect(anotherEntity?.remove).toHaveBeenCalledTimes(1);
     // So it knows not to send this back
-    expect(sut._serverWorldModel).toEqual({
+    expect(sut._parallelWorldModel).toEqual({
       anEntity: {
         numero: { value: 1 },
       },
     });
 
     sut.pushDiff();
-    expect(sut._serverWorldModel).toEqual({});
+    expect(sut._parallelWorldModel).toEqual({});
   });
 
   test("getDiffToBePushed", () => {
@@ -396,11 +396,11 @@ describe("Synchronizer", () => {
     const world = new ECSY.World();
     const sut = constructSut(world);
 
-    sut._serverWorldModel = {};
+    sut._parallelWorldModel = {};
     spyOn(sut, "getDiff").and.callFake((x) => x);
 
     const result = sut.getDiffToBePushed();
-    expect(result).toBe(sut._serverWorldModel);
+    expect(result).toBe(sut._parallelWorldModel);
   });
 
   test("adding message handler", () => {

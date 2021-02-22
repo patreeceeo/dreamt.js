@@ -49,42 +49,41 @@ export function getComponentValue(compo: Component<any>) {
  * How does it work?
  * =================
  *
- * ## Pipe abstraction ##
  *
  * It assumes that the communication protocol can be exposed as two functions:
  * One for handling incoming messages, and one for pushing messages. This
  * generalization will henceforth be referred to as a _pipe_.
  *
- * ## Step lifecycle ##
- *
- * tl;dr: diff, push, receive, apply
- *
- * Typically there's a rythm to the life of instances of this class. Each beat
- * in that rythm is referred to as a _step_. Steps begin with a method call.
- * First it compares its _local_ World with its model of the _parallel_ World
- * that exists on the other side of the pipe.
+ * The action may begin with a method call. First it compares its _local_ World
+ * with its model of the _parallel_ World that exists on the other side of the
+ * pipe.
  *
  * The comparison as well as the result is called a _diff_. A _diff_ contains
- * two kinds of operations. An _upsert_ operation either creates an entity or
- * adds a component to an existing entity, or both. It can also update a
- * component's value. When comparing components, it passes the components
- * through an associated identity function, if present, and uses the result, or
- * uses `component.value`. Comparison is then performed using `===`. A _remove_
- * operation either removes a component from an entity or removes an entire
+ * two kinds of operations:
+ *
+ * _upsert_: Either creates an entity or adds a component to an existing
+ * entity, or both. It can also update a component's data. When comparing
+ * components, it first passes the components through an associated identity
+ * function, if present, otherwise it uses `component.value`. Comparison is
+ * then performed using `===`.
+ *
+ * _remove_: Either removes a component from an entity or removes an entire
  * entity.
  *
- * Once the diff is complete, it's pushed through the pipe. On the receiving
- * end of the pipe, an instance applies received diffs to its World instance,
- * thus completing a step.
+ * Once the diff is complete, it's pushed through the pipe.
  *
- * While a step is in progress, it updates its model of the parallel World.
+ * The other way the action can begin is when its on the receiving end of a
+ * message. In this case it applies received diffs to its World instance.
+ *
  * After pushing or receiving a diff, that diff is also applied to the model so
  * that those same operations aren't included in a future diff.
  *
  * ## Opting In ##
  *
  * Users of this class must opt-in specific entities and component types before
- * it will actually do anything.
+ * it will actually do anything. Performance can be optimized by carefully
+ * choosing which entities and component types to opt-in for each instance of
+ * this class.
  *
  * * Aside on N-way communication: In actuality there may be _many_ parallel
  * Worlds that are being kept in sync, and thus N-way communication, but that
@@ -102,7 +101,7 @@ class Synchronizer {
     (c: ComponentConstructor) => any
   >();
   _defaultIdentifyValue = (c?: ComponentConstructor & { value: any }) => c?.value;
-  _serverWorldModel: IEntityComponentData = {};
+  _parallelWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
   _pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void;
 
@@ -288,20 +287,20 @@ class Synchronizer {
       }
     });
 
-    this._applyDiffToServerModel(diff);
+    this._applyDiffToModel(diff);
   }
 
   // TODO make pure
-  _applyDiffToServerModel(diff: IEntityComponentDiff) {
-    merge(this._serverWorldModel, diff.upsert);
+  _applyDiffToModel(diff: IEntityComponentDiff) {
+    merge(this._parallelWorldModel, diff.upsert);
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
       if (entityData === true) {
-        delete this._serverWorldModel[entityId];
+        delete this._parallelWorldModel[entityId];
       } else {
         Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
           if (shouldBeRemoved) {
-            delete this._serverWorldModel[entityId][componentId];
+            delete this._parallelWorldModel[entityId][componentId];
           }
         });
       }
@@ -309,7 +308,7 @@ class Synchronizer {
   }
 
   getDiffToBePushed() {
-    return this.getDiff(this._serverWorldModel);
+    return this.getDiff(this._parallelWorldModel);
   }
 
   /**
@@ -322,7 +321,7 @@ class Synchronizer {
       body: diff,
     };
     this._pushMessage("update_entities", message);
-    this._applyDiffToServerModel(diff);
+    this._applyDiffToModel(diff);
   }
 }
 
