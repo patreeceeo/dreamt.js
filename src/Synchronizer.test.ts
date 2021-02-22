@@ -103,6 +103,42 @@ describe("Synchronizer", () => {
     expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
   });
 
+  test("component identity function", () => {
+    class ComplexComponent extends ECSY.Component<any> {
+      part1?: string;
+      part2?: string;
+    }
+
+    const world = new ECSY.World();
+    const sut = constructSut(world);
+
+    sut.allowComponent("complex", ComplexComponent, (c: any) => c.part1 + c.part2);
+
+    const entity = sut.createEntity("a").addComponent(ComplexComponent, {
+      part1: "foo",
+      part2: "bar",
+    });
+
+    sut.pushDiff();
+
+    const comp = entity.getMutableComponent(ComplexComponent);
+    if(comp) {
+      comp.part1 = "baz";
+    }
+
+    expect(sut.getDiffToBePushed()).toEqual({
+      upsert: {
+        a: {
+          complex: {
+            part1: "baz",
+            part2: "bar",
+          },
+        },
+      },
+      remove: {}
+    })
+  });
+
   test("getDiff + _handleIncoming", () => {
     class NumComponent extends ECSY.Component<any> {
       value?: number;

@@ -1,5 +1,5 @@
 import * as ECSY from "ecsy";
-import { ComponentConstructor } from "./index";
+import { ComponentConstructor, Component } from "./index";
 import { get, set, merge } from "lodash";
 import { updateComponent } from "./ecsExtensions";
 
@@ -28,6 +28,19 @@ export interface IUpdateEntitiesMessage {
   body: IEntityComponentDiff;
 }
 
+// TODO may need to do object pooling for optimization
+
+export function getComponentValue(compo: Component<any>) {
+  const result = {} as any;
+  const ownProps = Object.getOwnPropertyNames(compo);
+  ownProps.forEach((key) => {
+    if(key !== "isComponent") {
+      result[key] = (compo as any)[key];
+    }
+  });
+  return result;
+}
+
 /**
  * The primary use cases is networked games using (Web)sockets, but can be used
  * in any cases that require keeping two (or more*) instances of an ECS World in
@@ -54,9 +67,9 @@ export interface IUpdateEntitiesMessage {
  * The comparison as well as the result is called a _diff_. A _diff_ contains
  * two kinds of operations. An _upsert_ operation either creates an entity or
  * adds a component to an existing entity, or both. It can also update a
- * component's value. When comparing components, it passes `component.value`
- * through an associated identity function, if present, or uses
- * `component.value`. Comparison is then performed using `===`. A _remove_
+ * component's value. When comparing components, it passes the components
+ * through an associated identity function, if present, and uses the result, or
+ * uses `component.value`. Comparison is then performed using `===`. A _remove_
  * operation either removes a component from an entity or removes an entire
  * entity.
  *
@@ -84,6 +97,11 @@ export interface IUpdateEntitiesMessage {
 class Synchronizer {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
+  _identifyComponentValueMap = new Map<
+    string,
+    (c: ComponentConstructor) => any
+  >();
+  _defaultIdentifyValue = (c?: ComponentConstructor & { value: any }) => c?.value;
   _serverWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
   _pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void;
@@ -139,9 +157,17 @@ class Synchronizer {
   /**
    * Add component of the given type to the allow list, meaning the data of any
    * instances of registered entities will be sent and recieved over the socket.
+   * TODO should allowed components only be passed in constructor?
    */
-  allowComponent(id: string, Component: ComponentConstructor) {
+  allowComponent(
+    id: string,
+    Component: ComponentConstructor,
+    identifyValue?: (c: ComponentConstructor) => any
+  ) {
     this._allowedComponentMap.set(id, Component);
+    if (identifyValue) {
+      this._identifyComponentValueMap.set(id, identifyValue);
+    }
   }
 
   getComponentById(id: string): ComponentConstructor | undefined {
@@ -162,17 +188,22 @@ class Synchronizer {
    */
   _getUpserts(input: IEntityComponentData): IEntityComponentData {
     const output = {};
-    const path = ["", "", "value"];
+    const path = ["", ""];
     for (const [entityId, entity] of this.getEntityIterator()) {
       path[0] = entityId;
       for (const [
         componentId,
         Component,
       ] of this.getAllowedComponentIterator()) {
-        const currentValue = (entity.getComponent(Component) as any)?.value;
+        const identifyValue =
+          this._identifyComponentValueMap.get(componentId) ||
+          this._defaultIdentifyValue;
+        const compo = entity.getComponent(Component);
+        const valueIdentity = identifyValue(compo as any);
         path[1] = componentId;
-        if (get(input, path) !== currentValue && currentValue !== undefined) {
-          set(output, path, currentValue);
+        const inputValue = get(input, path);
+        if (compo && (inputValue === undefined || identifyValue(inputValue) !== valueIdentity)) {
+          set(output, path, getComponentValue(compo as any));
         }
       }
     }
