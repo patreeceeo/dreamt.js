@@ -1,10 +1,10 @@
 import NetworkTransporter, {
   IEntityComponentDiff,
   IUpdateEntitiesMessage,
-} from "./NetworkTransporter";
+} from "./Synchronizer";
 import * as ECSY from "ecsy";
-import { cast } from "../testUtils";
-import { updateComponent } from "../ecsExtensions";
+import { cast } from "./testUtils";
+import { updateComponent } from "./ecsExtensions";
 
 function iterableToArray<I, A = I>(
   it: Iterable<I>,
@@ -42,7 +42,7 @@ function constructSut(
   return new NetworkTransporter(world, pushMessage, addHandler);
 }
 
-describe("NetworkTransporter", () => {
+describe("Synchronizer", () => {
   test("set/get/removeEntityById + getEntityIterator", () => {
     const world = new ECSY.World();
     const sut = constructSut(world);

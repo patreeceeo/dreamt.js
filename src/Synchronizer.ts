@@ -1,7 +1,7 @@
 import * as ECSY from "ecsy";
-import { ComponentConstructor } from "../index";
+import { ComponentConstructor } from "./index";
 import { get, set, merge } from "lodash";
-import { updateComponent } from "../ecsExtensions";
+import { updateComponent } from "./ecsExtensions";
 
 export interface IEntityComponentData {
   [entityId: string]: {
@@ -29,24 +29,59 @@ export interface IUpdateEntitiesMessage {
 }
 
 /**
- * TODO rename to WorldSynchronizer?
- * Responsible for:
+ * The primary use cases is networked games using (Web)sockets, but can be used
+ * in any cases that require keeping two (or more*) instances of an ECS World in
+ * sync with each other, one step at a time.
  *
- * A. Sending to the server operations necessary to bring it up-to-date with
- * the local `World` instance.
- * B. Recieving and applying operations from the server.
- * C. Maintaining its model of entities and components as they exist on the
- * server. This is done during or after A and B.
+ * How does it work?
+ * =================
  *
- * Designed to be used from within a system or game loop. Without any
- * intervention it will only do B and C. The system or game loop must tell it
- * when to gather and send updates.
+ * ## Pipe abstraction ##
  *
- * The system or game loop must also tell it what entities and component types
- * to care about. It will only send and apply updates to components of those
- * types on those specific entities.
+ * It assumes that the communication protocol can be exposed as two functions:
+ * One for handling incoming messages, and one for pushing messages. This
+ * generalization will henceforth be referred to as a _pipe_.
+ *
+ * ## Step lifecycle ##
+ *
+ * tl;dr: diff, push, receive, apply
+ *
+ * Typically there's a rythm to the life of instances of this class. Each beat
+ * in that rythm is referred to as a _step_. Steps begin with a method call.
+ * First it compares its _local_ World with its model of the _parallel_ World
+ * that exists on the other side of the pipe.
+ *
+ * The comparison as well as the result is called a _diff_. A _diff_ contains
+ * two kinds of operations. An _upsert_ operation either creates an entity or
+ * adds a component to an existing entity, or both. It can also update a
+ * component's value. When comparing components, it passes `component.value`
+ * through an associated identity function, if present, or uses
+ * `component.value`. Comparison is then performed using `===`. A _remove_
+ * operation either removes a component from an entity or removes an entire
+ * entity.
+ *
+ * Once the diff is complete, it's pushed through the pipe. On the receiving
+ * end of the pipe, an instance applies received diffs to its World instance,
+ * thus completing a step.
+ *
+ * While a step is in progress, it updates its model of the parallel World.
+ * After pushing or receiving a diff, that diff is also applied to the model so
+ * that those same operations aren't included in a future diff.
+ *
+ * ## Opting In ##
+ *
+ * Users of this class must opt-in specific entities and component types before
+ * it will actually do anything.
+ *
+ * * Aside on N-way communication: In actuality there may be _many_ parallel
+ * Worlds that are being kept in sync, and thus N-way communication, but that
+ * can be acheived by a service on the other end of the pipe that gathers and
+ * distributes messages for many World instances, thus in the scope of this
+ * class we can be lazy and pretend there's only two-way with one parallel
+ * World.
+ *
  */
-class NetworkTransporter {
+class Synchronizer {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
   _serverWorldModel: IEntityComponentData = {};
@@ -260,4 +295,4 @@ class NetworkTransporter {
   }
 }
 
-export default NetworkTransporter;
+export default Synchronizer;
