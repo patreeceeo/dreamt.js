@@ -1,15 +1,11 @@
 import * as ECSY from "ecsy";
 import { ComponentConstructor, Component } from "./index";
-import { get, set, merge } from "lodash";
+import { merge } from "lodash";
 import { updateComponent } from "./ecsExtensions";
 
 export interface IEntityComponentData {
   [entityId: string]: {
-    [componentId: string]: {
-      // TODO allow any shape, perhaps by adding an optional comparator
-      // parameter somewhere...
-      value: any;
-    };
+    [componentId: string]: any;
   };
 }
 export interface IEntityComponentFlags {
@@ -173,10 +169,8 @@ class Correspondent {
 
   /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(input: IEntityComponentData): IEntityComponentData {
-    const output = {};
-    const path = ["", ""];
+    const output: IEntityComponentData = {};
     for (const [entityId, entity] of this.getEntityIterator()) {
-      path[0] = entityId;
       for (const [
         componentId,
         Component,
@@ -186,14 +180,14 @@ class Correspondent {
           this._defaultIdentifyValue;
         const compo = entity.getComponent(Component);
         const valueIdentity = identifyValue(compo as any);
-        path[1] = componentId;
-        const inputValue = get(input, path);
+        const inputValue = input[entityId] ? input[entityId][componentId] : undefined;
         if (
           compo &&
           (inputValue === undefined ||
             identifyValue(inputValue) !== valueIdentity)
         ) {
-          set(output, path, getComponentValue(compo as any));
+          output[entityId] = output[entityId] || {};
+          output[entityId][componentId] = getComponentValue(compo as any);
         }
       }
     }
@@ -203,17 +197,15 @@ class Correspondent {
   /** Should not have side-effects */
   _getRemoves(input: IEntityComponentData): IEntityComponentFlags {
     const output: IEntityComponentFlags = {};
-    const path = ["", ""];
     Object.keys(input).forEach((entityId) => {
-      path[0] = entityId;
       const entity = this.getEntityById(entityId);
       if (entity?.alive) {
         const entityData = input[entityId];
         Object.keys(entityData).forEach((componentId) => {
-          path[1] = componentId;
           const Component = this.getComponentById(componentId);
           if (!entity.hasComponent(Component!)) {
-            set(output, path, true);
+            output[entityId] = output[entityId] || {};
+            (output[entityId] as any)[componentId] = true;
           }
         });
       } else {
@@ -244,11 +236,8 @@ class Correspondent {
    * entities that are ommitted by `message`.
    */
   applyDiff(diff: IEntityComponentDiff) {
-    const path = ["", ""];
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
-      path[0] = entityId;
       Object.entries(entityData).forEach(([componentId, componentData]) => {
-        path[1] = componentId;
         const entity = this.getEntityById(entityId);
         const Component = this.getComponentById(componentId)!;
         // TODO invariant(Component) since component types should be static,
