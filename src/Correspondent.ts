@@ -34,7 +34,7 @@ export function getComponentValue(compo: Component<any>) {
   const result = {} as any;
   const ownProps = Object.getOwnPropertyNames(compo);
   ownProps.forEach((key) => {
-    if(key !== "isComponent") {
+    if (key !== "isComponent") {
       result[key] = (compo as any)[key];
     }
   });
@@ -42,80 +42,69 @@ export function getComponentValue(compo: Component<any>) {
 }
 
 /**
- * The primary use cases is networked games using (Web)sockets, but can be used
- * in any cases that require keeping two (or more*) instances of an ECS World in
- * sync with each other, one step at a time.
+ * The primary use cases is networked games using (Web)sockets. Capable of
+ * producing and consuming messages which do any combination of:
  *
- * How does it work?
- * =================
+ * 1. Create entities
+ * 2. Add components
+ * 3. Update components
+ * 4. Remove components
+ * 5. Remove entities
  *
+ * Comparing its _local_ World with a cache, it produces a message containing a
+ * _diff_. The _diff_ contains two kinds of operations:
  *
- * It assumes that the communication protocol can be exposed as two functions:
- * One for handling incoming messages, and one for pushing messages. This
- * generalization will henceforth be referred to as a _pipe_.
+ * _upsert_: Either creates an entity or adds a component to an existing entity,
+ * or both. It can also update a component's data. When comparing components, it
+ * first passes the components through an associated identity function, if
+ * present, otherwise it uses `component.value`. Comparison is then performed
+ * using `===`.
  *
- * The action may begin with a method call. First it compares its _local_ World
- * with its model of the _parallel_ World that exists on the other side of the
- * pipe.
+ * _remove_: Either removes a component from an entity or removes an entire entity.
  *
- * The comparison as well as the result is called a _diff_. A _diff_ contains
- * two kinds of operations:
+ * When consuming a message, it applies the message's diff to its World instance.
  *
- * _upsert_: Either creates an entity or adds a component to an existing
- * entity, or both. It can also update a component's data. When comparing
- * components, it first passes the components through an associated identity
- * function, if present, otherwise it uses `component.value`. Comparison is
- * then performed using `===`.
+ * Wether it's producing or consuming messages, it will modify the cache _in
+ * place_ so that the diff operations it's producing or consuming aren't re-produced.
  *
- * _remove_: Either removes a component from an entity or removes an entire
- * entity.
- *
- * Once the diff is complete, it's pushed through the pipe.
- *
- * The other way the action can begin is when its on the receiving end of a
- * message. In this case it applies received diffs to its World instance.
- *
- * After pushing or receiving a diff, that diff is also applied to the model so
- * that those same operations aren't included in a future diff.
- *
- * ## Opting In ##
- *
- * Users of this class must opt-in specific entities and component types before
- * it will actually do anything. Performance can be optimized by carefully
- * choosing which entities and component types to opt-in for each instance of
- * this class.
- *
- * * Aside on N-way communication: In actuality there may be _many_ parallel
- * Worlds that are being kept in sync, and thus N-way communication, but that
- * can be acheived by a service on the other end of the pipe that gathers and
- * distributes messages for many World instances, thus in the scope of this
- * class we can be lazy and pretend there's only two-way with one parallel
- * World.
- *
+ * Before it will actually do anything, users of this class must opt-in specific
+ * entities as well as specific component types. Performance can be optimized by
+ * carefully choosing which entities and component types to opt-in for each
+ * instance of this class.
  */
-class Synchronizer {
+class Correspondent {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
   _identifyComponentValueMap = new Map<
     string,
     (c: ComponentConstructor) => any
   >();
-  _defaultIdentifyValue = (c?: ComponentConstructor & { value: any }) => c?.value;
+  _defaultIdentifyValue = (c?: ComponentConstructor & { value: any }) =>
+    c?.value;
   _parallelWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
-  _pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void;
 
-  constructor(
-    world: ECSY.World,
-    pushMessage: (messageType: string, message: IUpdateEntitiesMessage) => void,
-    addHandler: (
-      messageType: string,
-      handler: (m: IUpdateEntitiesMessage) => void
-    ) => void
+  static updateCache(
+    cache: IEntityComponentData,
+    diff: IEntityComponentDiff
   ) {
+    merge(cache, diff.upsert);
+
+    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
+      if (entityData === true) {
+        delete cache[entityId];
+      } else {
+        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
+          if (shouldBeRemoved) {
+            delete cache[entityId][componentId];
+          }
+        });
+      }
+    });
+  }
+
+  constructor(world: ECSY.World) {
     this._world = world;
-    this._pushMessage = pushMessage;
-    addHandler("update_entities", this._handleIncoming);
   }
 
   registerEntity(id: string, entity: ECSY.Entity) {
@@ -167,6 +156,7 @@ class Synchronizer {
     if (identifyValue) {
       this._identifyComponentValueMap.set(id, identifyValue);
     }
+    return this;
   }
 
   getComponentById(id: string): ComponentConstructor | undefined {
@@ -181,10 +171,7 @@ class Synchronizer {
     return this._allowedComponentMap.entries();
   }
 
-  /**
-   * Should not have side-effects
-   * TODO make this a pure function rather than a method?
-   */
+  /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(input: IEntityComponentData): IEntityComponentData {
     const output = {};
     const path = ["", ""];
@@ -201,7 +188,11 @@ class Synchronizer {
         const valueIdentity = identifyValue(compo as any);
         path[1] = componentId;
         const inputValue = get(input, path);
-        if (compo && (inputValue === undefined || identifyValue(inputValue) !== valueIdentity)) {
+        if (
+          compo &&
+          (inputValue === undefined ||
+            identifyValue(inputValue) !== valueIdentity)
+        ) {
           set(output, path, getComponentValue(compo as any));
         }
       }
@@ -233,11 +224,11 @@ class Synchronizer {
   }
 
   /**
-   * Get the operations necessary to bring the network up-to-date with the
-   * local world instance.
+   * Get the operations necessary to bring the network up-to-date with the local
+   * world instance.
    *
-   * @param input represents the network's world (entities and components)
-   * @returns the operations AKA a diff.
+   * @param input Represents the network's world (entities and components)
+   * @returns The operations AKA a diff.
    */
   getDiff(input: IEntityComponentData): IEntityComponentDiff {
     return {
@@ -247,15 +238,13 @@ class Synchronizer {
   }
 
   /**
-   * Handle updates recieved via the socket connection, applying them to
-   * the allow-listed components of registered entities mentioned therein.
-   * Additionally, it will create entities mentioned in `message` and add
-   * their components if necessary. Conversely, it will remove entities that
-   * are ommitted by `message`.
+   * Applies diff to the allow-listed components of registered entities
+   * mentioned therein. Additionally, it will create entities mentioned in
+   * `message` and add their components if necessary. Conversely, it will remove
+   * entities that are ommitted by `message`.
    */
-  _handleIncoming(message: IUpdateEntitiesMessage) {
+  applyDiff(diff: IEntityComponentDiff) {
     const path = ["", ""];
-    const diff = message.body;
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       path[0] = entityId;
       Object.entries(entityData).forEach(([componentId, componentData]) => {
@@ -286,43 +275,16 @@ class Synchronizer {
         });
       }
     });
-
-    this._applyDiffToModel(diff);
   }
 
-  // TODO make pure
-  _applyDiffToModel(diff: IEntityComponentDiff) {
-    merge(this._parallelWorldModel, diff.upsert);
-
-    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
-      if (entityData === true) {
-        delete this._parallelWorldModel[entityId];
-      } else {
-        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
-          if (shouldBeRemoved) {
-            delete this._parallelWorldModel[entityId][componentId];
-          }
-        });
-      }
-    });
+  produce(cache: IEntityComponentData): IEntityComponentDiff {
+    return this.getDiff(cache);
   }
 
-  getDiffToBePushed() {
-    return this.getDiff(this._parallelWorldModel);
-  }
-
-  /**
-   * Send data over the socket representing changes since last call
-   * WRT the allow-listed components of all registered entities.
-   */
-  pushDiff() {
-    const diff = this.getDiffToBePushed();
-    const message: IUpdateEntitiesMessage = {
-      body: diff,
-    };
-    this._pushMessage("update_entities", message);
-    this._applyDiffToModel(diff);
+  consume(diff: IEntityComponentDiff): Correspondent {
+    this.applyDiff(diff);
+    return this;
   }
 }
 
-export default Synchronizer;
+export default Correspondent;
