@@ -38,35 +38,80 @@ export function getComponentValue(compo: Component<any>) {
 }
 
 /**
- * The primary use cases is networked games using (Web)sockets. Capable of
- * producing and consuming messages which do any combination of:
+ * A possibly novel approach to wire formatting data in server-backed networked
+ * games. How it works: Comparing the local game state with a cached
+ * representation of the game state, it produces a diff. The diff contains two
+ * kinds of operations:
  *
- * 1. Create entities
- * 2. Add components
- * 3. Update components
- * 4. Remove components
- * 5. Remove entities
+ * ### upsert
  *
- * Comparing its _local_ World with a cache, it produces a message containing a
- * _diff_. The _diff_ contains two kinds of operations:
+ * Either creates an entity or adds a component to an existing entity, or both.
+ * It can also update a component's data. In the following example
  *
- * _upsert_: Either creates an entity or adds a component to an existing entity,
- * or both. It can also update a component's data. When comparing components, it
- * first passes the components through an associated identity function, if
- * present, otherwise it uses `component.value`. Comparison is then performed
- * using `===`.
+ * ```
+ * {
+ *   upsert: {
+ *     megaMan: {
+ *       velocity: { value: 6 }
+ *     }
+ *   }
+ * }
+ * ```
  *
- * _remove_: Either removes a component from an entity or removes an entire entity.
+ * Would be the resulting diff if Mega Man's velocity is 6 while the cache says
+ * it's some other integer. When another client is applying this diff to its
+ * game state, it would set Mega Man's velocity to 6, adding the velocity
+ * component if necessary, and also creating the Mega Man entity if necessary.
  *
- * When consuming a message, it applies the message's diff to its World instance.
+ * When comparing components, it first passes each component through an
+ * associated identity function, if available, otherwise it grabs
+ * `component.value`. Either way, it assumes the resulting values should be
+ * compared by reference (`===` in JavaScript.) This is handy for when a by
+ * reference comparison would be misleading. For example, if the velocity
+ * component were an array:
  *
- * Wether it's producing or consuming messages, it will modify the cache _in
- * place_ so that the diff operations it's producing or consuming aren't re-produced.
+ * ```
+ * {
+ *   upsert: {
+ *     megaMan: {
+ *       velocity: [3, 7]
+ *     }
+ *   }
+ * }
+ * ```
  *
- * Before it will actually do anything, users of this class must opt-in specific
- * entities as well as specific component types. Performance can be optimized by
- * carefully choosing which entities and component types to opt-in for each
- * instance of this class.
+ * Then two velocity components would never appear equal even if they contain
+ * the same value. An identity function that concatinates the numbers in to a JS
+ * string would solve this, since JS strings are equal by reference if and only
+ * if they contain the same value. remove
+ *
+ * Either removes a component from an entity or removes an entire entity. Example:
+ *
+ * ```
+ * {
+ *   remove: {
+ *     megaMan: {
+ *       velocity: true
+ *     },
+ *     drWily: true
+ *   }
+ * }
+ * ```
+ *
+ * Would remove the velocity component from Mega Man, and remove the Dr. Wily
+ * component altogether.
+ *
+ * In addition to producing and consuming diffs, it provides a static function
+ * that will update the cache given a diff. The cache tells it what the world
+ * looked like last time so it knows what's changed when producing a diff. The
+ * cache is its memory.
+ *
+ * It has a reference to the entire game state (the world, in ECS parlance) but
+ * it doesn't concern itself with every component of every entity. That could be
+ * too expensive in terms of CPU and network usage. Instead the system that's
+ * using it must tell it what entities to care about. It also must be told what
+ * types of components to care about. We supply it with a string identifier for
+ * each entity and each component type which it uses when producing and consuming diffs.
  */
 class Correspondent {
   _entityMap = new Map<string, ECSY.Entity>();
@@ -80,10 +125,7 @@ class Correspondent {
   _parallelWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
 
-  static updateCache(
-    cache: IEntityComponentData,
-    diff: IEntityComponentDiff
-  ) {
+  static updateCache(cache: IEntityComponentData, diff: IEntityComponentDiff) {
     merge(cache, diff.upsert);
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
@@ -180,7 +222,9 @@ class Correspondent {
           this._defaultIdentifyValue;
         const compo = entity.getComponent(Component);
         const valueIdentity = identifyValue(compo as any);
-        const inputValue = input[entityId] ? input[entityId][componentId] : undefined;
+        const inputValue = input[entityId]
+          ? input[entityId][componentId]
+          : undefined;
         if (
           compo &&
           (inputValue === undefined ||
