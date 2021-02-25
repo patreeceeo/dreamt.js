@@ -113,7 +113,7 @@ export function getComponentValue(compo: Component<any>) {
  * types of components to care about. We supply it with a string identifier for
  * each entity and each component type which it uses when producing and consuming diffs.
  */
-class Correspondent {
+export class Correspondent {
   _entityMap = new Map<string, ECSY.Entity>();
   _allowedComponentMap = new Map<string, ComponentConstructor>();
   _identifyComponentValueMap = new Map<
@@ -310,14 +310,14 @@ class Correspondent {
     });
   }
 
+  // rename to produceDiff?
   produce(cache: IEntityComponentData): IEntityComponentDiff {
     return this.getDiff(cache);
   }
 
+  // rename to consumeDiff?
   consume(diff: IEntityComponentDiff): Correspondent {
     this.applyDiff(diff);
     return this;
   }
 }
-
-export default Correspondent;

@@ -1,4 +1,5 @@
-import Correspondent, {
+import {
+  Correspondent,
   IEntityComponentDiff,
   IEntityComponentData,
 } from "./Correspondent";
