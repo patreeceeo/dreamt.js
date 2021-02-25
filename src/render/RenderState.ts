@@ -1,12 +1,28 @@
 import * as MOBX from "mobx";
 import * as ECSY from "ecsy";
 
+interface IQueryResultsCollection {
+  [name: string]: {
+    results: ECSY.Entity[]
+  }
+}
+
 export class RenderState {
   entities: MOBX.ObservableSet<ECSY.Entity> = MOBX.observable.set();
+  entityComponentMap: Map<string, MOBX.ObservableSet<ECSY.Entity>> = new Map();
 
-  updateFromQueries = MOBX.action((queries: { results: ECSY.Entity[] }[]) => {
+  updateFromQueries = MOBX.action((queries: IQueryResultsCollection) => {
+    const queryResults = Object.values(queries);
+    const queryNames = Object.keys(queries);
     this.entities.clear();
-    queries.forEach((q) => q.results.forEach((e) => this.entities.add(e)));
+    queryResults.forEach((result) => result.results.forEach((entity) => this.entities.add(entity)));
+    queryNames.forEach((name) => {
+      if(!this.entityComponentMap.has(name)) {
+        this.entityComponentMap.set(name, MOBX.observable.set(queries[name].results))
+      } else {
+        this.entityComponentMap.get(name)!.replace(queries[name].results);
+      }
+    })
   });
 
   mapEntities<TComponentConstructor extends ECSY.ComponentConstructor<ECSY.Component<any>>, TReturn>(

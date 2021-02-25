@@ -23,17 +23,31 @@ export class EntityRenderConnector<
         attributes.renderToDom(this._state);
       }
       execute() {
-        const queries = Object.values(this.queries);
-        if (
-          _.some(queries, (q) => {
+        // const queries = Object.entries(this.queries);
+        // if (
+        //   _.some(queries, ([key, queryResult]) => {
+        //     return (
+        //       queryResult.added && queryResult.added!.length > 0 ||
+        //       queryResult.removed && queryResult.removed!.length > 0 ||
+        //       queryResult.changed && queryResult.changed!.length > 0
+        //     );
+        //   })
+        // ) {
+        //   this._state.updateFromQueries(queries);
+        // }
+
+        const queryResults = Object.values(this.queries);
+        const shouldUpdateState =
+          _.some(queryResults, (result) => {
             return (
-              q.added && q.added!.length > 0 ||
-              q.removed && q.removed!.length > 0 ||
-              q.changed && q.changed!.length > 0
+              result.added &&   result.added!.length > 0 ||
+              result.removed && result.removed!.length > 0 ||
+              result.changed && result.changed!.length > 0
             );
-          })
-        ) {
-          this._state.updateFromQueries(queries);
+          });
+
+        if(shouldUpdateState) {
+          this._state.updateFromQueries(this.queries);
         }
       }
     }

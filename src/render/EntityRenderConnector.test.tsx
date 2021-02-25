@@ -6,11 +6,12 @@ import * as ECSY from "ecsy";
 import * as TUT from "../testUtils";
 import { observer } from "mobx-react-lite";
 
-class ListItemComponent extends ECSY.Component<{ value: string }> {
+class LiComponent extends ECSY.Component<{ value: string }> {
   static schema = {
     value: { type: ECSY.Types.String },
   };
 }
+class BComponent extends ECSY.Component<any> {}
 
 describe("EntityRenderConnector", () => {
   let sut: EntityRenderConnector;
@@ -26,8 +27,8 @@ describe("EntityRenderConnector", () => {
       return (
         <ul>
           {entities.map((e) => {
-            const c = e.getComponent(TUT.cast(ListItemComponent));
-            const value = TUT.cast<{value: string}>(c).value;
+            const c = e.getComponent(TUT.cast(LiComponent));
+            const value = TUT.cast<{ value: string }>(c).value;
             return <li key={value}>{value}</li>;
           })}
         </ul>
@@ -45,7 +46,7 @@ describe("EntityRenderConnector", () => {
     attributes = {
       renderToDom,
       components: {
-        ListItemComponent,
+        LiComponent,
       },
     };
 
@@ -60,7 +61,7 @@ describe("EntityRenderConnector", () => {
       sut.RenderSystem,
       attributes
     );
-    expect(sut.RenderSystem.queries.ListItemComponent).toBeDefined();
+    expect(sut.RenderSystem.queries.LiComponent).toBeDefined();
   });
 
   test("using React", async () => {
@@ -75,7 +76,7 @@ describe("EntityRenderConnector", () => {
 
     let results: ECSY.Entity[] = [];
     system.queries = {
-      ListItemComponent: {
+      LiComponent: {
         added: results,
         removed: [],
         changed: [],
@@ -89,15 +90,15 @@ describe("EntityRenderConnector", () => {
     expect(rootEl.firstElementChild?.tagName).toBe("UL");
 
     // Entities added
-    const e1 = new ECSY.Entity().addComponent(ListItemComponent, {
+    const e1 = new ECSY.Entity().addComponent(LiComponent, {
       value: "hi",
     });
-    const e2 = new ECSY.Entity().addComponent(ListItemComponent, {
+    const e2 = new ECSY.Entity().addComponent(LiComponent, {
       value: "bye",
     });
     results = [e1, e2];
     system.queries = {
-      ListItemComponent: {
+      LiComponent: {
         added: results,
         removed: [],
         changed: [],
@@ -111,5 +112,53 @@ describe("EntityRenderConnector", () => {
     expect(rootEl.firstElementChild?.children.item(0)?.tagName).toBe("LI");
     expect(rootEl.firstElementChild?.children.item(0)?.textContent).toBe("hi");
     expect(rootEl.firstElementChild?.children.item(1)?.textContent).toBe("bye");
+  });
+
+  test("using multiple queries", () => {
+    const renderToDom = jest.fn();
+    attributes = {
+      renderToDom,
+      components: {
+        LiComponent,
+        BComponent,
+      },
+    };
+
+    sut = new EntityRenderConnector(
+      TUT.cast<ECSY.World>(worldMock),
+      TUT.cast(attributes)
+    );
+
+    const system = new sut.RenderSystem(worldMock);
+    system.init();
+
+    // Entities added
+    const e1 = new ECSY.Entity();
+    const e2 = new ECSY.Entity();
+    const e3 = new ECSY.Entity();
+    system.queries = {
+      LiComponent: {
+        added: [e1, e3],
+        removed: [],
+        changed: [],
+        results: [e1, e3],
+      },
+      BComponent: {
+        added: [e2],
+        removed: [],
+        changed: [],
+        results: [e2],
+      },
+    };
+    system.execute(0, 0);
+
+    expect(renderToDom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityComponentMap: new Map([
+          ["LiComponent", [e1, e3]],
+          ["BComponent", [e2]],
+        ]),
+      })
+    );
   });
 });
