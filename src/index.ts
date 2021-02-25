@@ -26,3 +26,4 @@ export { addComponent, removeComponent, replaceComponent, updateComponent, copyM
 
 export { EntityRenderConnector, RenderState } from "./render";
 
+export const Correspondent = require('./Correspondent');
