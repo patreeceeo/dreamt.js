@@ -274,10 +274,10 @@ export class Correspondent {
    * @param input Represents the network's world (entities and components)
    * @returns The operations AKA a diff.
    */
-  getDiff(input: IEntityComponentData): IEntityComponentDiff {
+  produceDiff(cache: IEntityComponentData): IEntityComponentDiff {
     return {
-      upsert: this._getUpserts(input),
-      remove: this._getRemoves(input),
+      upsert: this._getUpserts(cache),
+      remove: this._getRemoves(cache),
     };
   }
 
@@ -287,7 +287,7 @@ export class Correspondent {
    * `message` and add their components if necessary. Conversely, it will remove
    * entities that are ommitted by `message`.
    */
-  applyDiff(diff: IEntityComponentDiff) {
+  consumeDiff(diff: IEntityComponentDiff): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
         const entity = this.getEntityById(entityId);
@@ -316,16 +316,6 @@ export class Correspondent {
         });
       }
     });
-  }
-
-  // rename to produceDiff?
-  produce(cache: IEntityComponentData): IEntityComponentDiff {
-    return this.getDiff(cache);
-  }
-
-  // rename to consumeDiff?
-  consume(diff: IEntityComponentDiff): Correspondent {
-    this.applyDiff(diff);
     return this;
   }
 }

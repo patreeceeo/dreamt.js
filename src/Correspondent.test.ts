@@ -120,11 +120,11 @@ describe("Correspondent", () => {
       part2: "bar",
     });
 
-    sut.produce(cache);
+    sut.produceDiff(cache);
 
     updateComponent(entity, ComplexComponent, { part1: "baz" });
 
-    expect(sut.produce(cache)).toEqual({
+    expect(sut.produceDiff(cache)).toEqual({
       upsert: {
         a: {
           complex: {
@@ -166,7 +166,7 @@ describe("Correspondent", () => {
       cache: IEntityComponentData,
       cacheExpected: IEntityComponentData
     ) {
-      const diffProduced = sut.produce(cache);
+      const diffProduced = sut.produceDiff(cache);
       expect(diffProduced).toEqual(diffExpected);
 
       Correspondent.updateCache(cache, diffProduced);
@@ -179,7 +179,7 @@ describe("Correspondent", () => {
       cache: IEntityComponentData,
       cacheExpected: IEntityComponentData
     ) {
-      sut.consume(diffToConsume);
+      sut.consumeDiff(diffToConsume);
 
       Correspondent.updateCache(cache, diffToConsume);
 
