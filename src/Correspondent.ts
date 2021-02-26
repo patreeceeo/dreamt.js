@@ -128,6 +128,11 @@ export class Correspondent {
   _parallelWorldModel: IEntityComponentData = {};
   _world: ECSY.World;
 
+  static isEmptyDiff(diff: IEntityComponentDiff) {
+    return Object.keys(diff.remove).length === 0 &&
+        Object.keys(diff.upsert).length === 0;
+  }
+
   static updateCache(cache: IEntityComponentData, diff: IEntityComponentDiff) {
     merge(cache, diff.upsert);
 

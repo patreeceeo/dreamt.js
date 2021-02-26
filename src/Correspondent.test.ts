@@ -98,9 +98,9 @@ describe("Correspondent", () => {
           type: ECSY.Types.String,
         },
         part2: {
-          type: ECSY.Types.String
-        }
-      }
+          type: ECSY.Types.String,
+        },
+      };
       part1?: string;
       part2?: string;
     }
@@ -141,16 +141,16 @@ describe("Correspondent", () => {
   test("diff operations", () => {
     class NumComponent extends ECSY.Component<any> {
       static schema = {
-        value: { type: ECSY.Types.Number }
-      }
+        value: { type: ECSY.Types.Number },
+      };
       value?: number;
     }
     class ExcludedComponent extends ECSY.Component<any> {}
     class StrComponent extends ECSY.Component<any> {
       value?: string;
       static schema = {
-        value: { type: ECSY.Types.String }
-      }
+        value: { type: ECSY.Types.String },
+      };
     }
 
     const world = new ECSY.World()
@@ -414,5 +414,30 @@ describe("Correspondent", () => {
     );
 
     expect(anotherEntity?.remove).toHaveBeenCalledTimes(1);
+  });
+
+  test("isEmptyDiff", () => {
+    expect(
+      Correspondent.isEmptyDiff({
+        upsert: {},
+        remove: {},
+      })
+    ).toBe(true);
+    expect(
+      Correspondent.isEmptyDiff({
+        upsert: {
+          anEntity: {},
+        },
+        remove: {},
+      })
+    ).toBe(false);
+    expect(
+      Correspondent.isEmptyDiff({
+        upsert: {},
+        remove: {
+          anEntity: {},
+        },
+      })
+    ).toBe(false);
   });
 });
