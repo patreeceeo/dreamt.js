@@ -3,7 +3,8 @@ import * as ECSY from "ecsy";
 
 interface IQueryResultsCollection {
   [name: string]: {
-    results: ECSY.Entity[]
+    results: ECSY.Entity[];
+    changed: ECSY.Entity[];
   }
 }
 
@@ -15,7 +16,10 @@ export class RenderState {
     const queryResults = Object.values(queries);
     const queryNames = Object.keys(queries);
     this.entities.clear();
-    queryResults.forEach((result) => result.results.forEach((entity) => this.entities.add(entity)));
+    queryResults.forEach((result) => {
+      result.results.forEach((entity) => this.entities.add(entity))
+      result.changed.forEach((entity) => this.entities.add(entity))
+    });
     queryNames.forEach((name) => {
       if(!this.entityComponentMap.has(name)) {
         this.entityComponentMap.set(name, MOBX.observable.set(queries[name].results))

@@ -112,6 +112,20 @@ describe("EntityRenderConnector", () => {
     expect(rootEl.firstElementChild?.children.item(0)?.tagName).toBe("LI");
     expect(rootEl.firstElementChild?.children.item(0)?.textContent).toBe("hi");
     expect(rootEl.firstElementChild?.children.item(1)?.textContent).toBe("bye");
+
+    (e2.getMutableComponent(LiComponent) as any).value = "sayanara";
+    system.queries = {
+      LiComponent: {
+        added: [],
+        removed: [],
+        changed: [e2],
+        results: [],
+      },
+    };
+    system.execute(0, 0);
+    expect(rootEl.firstElementChild?.children.item(1)?.textContent).toBe(
+      "sayanara"
+    );
   });
 
   test("using multiple queries", () => {
