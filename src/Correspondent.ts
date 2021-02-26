@@ -40,6 +40,10 @@ export function getComponentValue(compo: Component<any>, schema: ComponentConstr
   return result;
 }
 
+interface IComponentOpts {
+  writeCache?: (c: ComponentConstructor) => any
+}
+
 /**
  * A possibly novel approach to wire formatting data in server-backed networked
  * games. How it works: Comparing the local game state with a cached
@@ -117,16 +121,6 @@ export function getComponentValue(compo: Component<any>, schema: ComponentConstr
  * each entity and each component type which it uses when producing and consuming diffs.
  */
 export class Correspondent {
-  _entityMap = new Map<string, ECSY.Entity>();
-  _allowedComponentMap = new Map<string, ComponentConstructor>();
-  _identifyComponentValueMap = new Map<
-    string,
-    (c: ComponentConstructor) => any
-  >();
-  _defaultIdentifyValue = (c?: ComponentConstructor & { value: any }) =>
-    c?.value;
-  _parallelWorldModel: IEntityComponentData = {};
-  _world: ECSY.World;
 
   static isEmptyDiff(diff: IEntityComponentDiff) {
     return Object.keys(diff.remove).length === 0 &&
@@ -148,6 +142,17 @@ export class Correspondent {
       }
     });
   }
+
+  _entityMap = new Map<string, ECSY.Entity>();
+  _componentMap = new Map<string, ComponentConstructor>();
+  _componentOptsMap = new Map<
+    string,
+    IComponentOpts
+  >();
+  _defaultComponentOpts: IComponentOpts = {
+    writeCache: (c) => (c as any)?.value,
+  }
+  _world: ECSY.World;
 
   constructor(world: ECSY.World) {
     this._world = world;
@@ -193,28 +198,29 @@ export class Correspondent {
    * instances of registered entities will be sent and recieved over the socket.
    * TODO should allowed components only be passed in constructor?
    */
-  allowComponent(
+  registerComponent(
     id: string,
     Component: ComponentConstructor,
-    identifyValue?: (c: ComponentConstructor) => any
+    opts?: IComponentOpts
   ) {
-    this._allowedComponentMap.set(id, Component);
-    if (identifyValue) {
-      this._identifyComponentValueMap.set(id, identifyValue);
+    this._componentMap.set(id, Component);
+    if (opts) {
+      this._componentOptsMap.set(id, opts);
     }
     return this;
   }
 
   getComponentById(id: string): ComponentConstructor | undefined {
-    return this._allowedComponentMap.get(id);
+    return this._componentMap.get(id);
   }
 
-  disallowComponent(id: string) {
-    this._allowedComponentMap.delete(id);
+  getComponentIterator(): Iterable<[string, ComponentConstructor]> {
+    return this._componentMap.entries();
   }
 
-  getAllowedComponentIterator(): Iterable<[string, ComponentConstructor]> {
-    return this._allowedComponentMap.entries();
+  getComponentOpt(componentId: string, optName: keyof IComponentOpts) {
+    const opts = this._componentOptsMap.get(componentId);
+    return opts ? opts[optName] : this._defaultComponentOpts[optName];
   }
 
   /** Should not have side-effects TODO make this a pure function rather than a method? */
@@ -224,19 +230,18 @@ export class Correspondent {
       for (const [
         componentId,
         Component,
-      ] of this.getAllowedComponentIterator()) {
-        const identifyValue =
-          this._identifyComponentValueMap.get(componentId) ||
-          this._defaultIdentifyValue;
+      ] of this.getComponentIterator()) {
+        const writeCache =
+          this.getComponentOpt(componentId, "writeCache")
         const compo = entity.getComponent(Component);
-        const valueIdentity = identifyValue(compo as any);
+        const valueIdentity = writeCache!(compo as any);
         const inputValue = input[entityId]
           ? input[entityId][componentId]
           : undefined;
         if (
           compo &&
           (inputValue === undefined ||
-            identifyValue(inputValue) !== valueIdentity)
+            writeCache!(inputValue) !== valueIdentity)
         ) {
           output[entityId] = output[entityId] || {};
           output[entityId][componentId] = getComponentValue(compo as any, Component.schema);

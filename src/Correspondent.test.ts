@@ -6,6 +6,7 @@ import {
 import * as ECSY from "ecsy";
 import { cast } from "./testUtils";
 import { updateComponent } from "./ecsExtensions";
+import { ComponentConstructor } from "./index";
 
 function iterableToArray<I, A = I>(
   it: Iterable<I>,
@@ -31,7 +32,7 @@ function constructSut(world: ECSY.World) {
 }
 
 describe("Correspondent", () => {
-  test("set/get/removeEntityById + getEntityIterator", () => {
+  test("(un)registerEntity + getEntityById + getEntityIterator", () => {
     const world = new ECSY.World();
     const sut = constructSut(world);
     const entityA = world.createEntity("a");
@@ -59,18 +60,12 @@ describe("Correspondent", () => {
     expect(listEntities(sut)).toEqual([]);
   });
 
-  test("(dis)allowComponent + getAllowedComponentIterator", () => {
-    function getAllowedComponentIdList(sut: Correspondent) {
-      return iterableToArray(
-        sut.getAllowedComponentIterator(),
-        (entry) => entry[0]
-      );
+  test("registerComponent + getComponentIterator", () => {
+    function getComponentIdList(sut: Correspondent) {
+      return iterableToArray(sut.getComponentIterator(), (entry) => entry[0]);
     }
-    function getAllowedComponentList(sut: Correspondent) {
-      return iterableToArray(
-        sut.getAllowedComponentIterator(),
-        (entry) => entry[1]
-      );
+    function getComponentList(sut: Correspondent) {
+      return iterableToArray(sut.getComponentIterator(), (entry) => entry[1]);
     }
 
     class ComponentA extends ECSY.Component<any> {}
@@ -79,19 +74,14 @@ describe("Correspondent", () => {
     const world = new ECSY.World();
     const sut = constructSut(world);
 
-    sut.allowComponent("a", ComponentA);
-    sut.allowComponent("b", ComponentB);
+    sut.registerComponent("a", ComponentA);
+    sut.registerComponent("b", ComponentB);
 
-    expect(getAllowedComponentIdList(sut)).toEqual(["a", "b"]);
-    expect(getAllowedComponentList(sut)).toEqual([ComponentA, ComponentB]);
-
-    sut.disallowComponent("a");
-
-    expect(getAllowedComponentIdList(sut)).toEqual(["b"]);
-    expect(getAllowedComponentList(sut)).toEqual([ComponentB]);
+    expect(getComponentIdList(sut)).toEqual(["a", "b"]);
+    expect(getComponentList(sut)).toEqual([ComponentA, ComponentB]);
   });
 
-  test("component identity function", () => {
+  test("registerComponent opt: writeCache", () => {
     class ComplexComponent extends ECSY.Component<any> {
       static schema = {
         part1: {
@@ -109,11 +99,9 @@ describe("Correspondent", () => {
     const sut = constructSut(world);
     const cache = {};
 
-    sut.allowComponent(
-      "complex",
-      ComplexComponent,
-      (c: any) => c.part1 + c.part2
-    );
+    sut.registerComponent("complex", ComplexComponent, {
+      writeCache: (c: ComponentConstructor) => (c as any).part1 + (c as any).part2,
+    });
 
     const entity = sut.createEntity("a").addComponent(ComplexComponent, {
       part1: "foo",
@@ -157,8 +145,8 @@ describe("Correspondent", () => {
       .registerComponent(NumComponent)
       .registerComponent(ExcludedComponent);
     const sut = constructSut(world)
-      .allowComponent("numero", NumComponent)
-      .allowComponent("varchar", StrComponent);
+      .registerComponent("numero", NumComponent)
+      .registerComponent("varchar", StrComponent);
     const cache: IEntityComponentData = {};
 
     function testProduce(
