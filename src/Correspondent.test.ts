@@ -93,6 +93,14 @@ describe("Correspondent", () => {
 
   test("component identity function", () => {
     class ComplexComponent extends ECSY.Component<any> {
+      static schema = {
+        part1: {
+          type: ECSY.Types.String,
+        },
+        part2: {
+          type: ECSY.Types.String
+        }
+      }
       part1?: string;
       part2?: string;
     }
@@ -132,11 +140,17 @@ describe("Correspondent", () => {
   // TODO write separate tests for updateCache?
   test("diff operations", () => {
     class NumComponent extends ECSY.Component<any> {
+      static schema = {
+        value: { type: ECSY.Types.Number }
+      }
       value?: number;
     }
     class ExcludedComponent extends ECSY.Component<any> {}
     class StrComponent extends ECSY.Component<any> {
       value?: string;
+      static schema = {
+        value: { type: ECSY.Types.String }
+      }
     }
 
     const world = new ECSY.World()

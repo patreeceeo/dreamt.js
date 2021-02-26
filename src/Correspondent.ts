@@ -26,13 +26,16 @@ export interface IUpdateEntitiesMessage {
 
 // TODO may need to do object pooling for optimization
 
-export function getComponentValue(compo: Component<any>) {
+export function getComponentValue(compo: Component<any>, schema: ComponentConstructor<any>["schema"]) {
   const result = {} as any;
-  const ownProps = Object.getOwnPropertyNames(compo);
-  ownProps.forEach((key) => {
-    if (key !== "isComponent") {
-      result[key] = (compo as any)[key];
+  if(!schema) {
+    if(process.env.NODE_ENV === "development") {
+      console.warn("Trying to use a component without a schema with Correspondent. This won't work.")
     }
+    return;
+  }
+  Object.keys(schema).forEach((key) => {
+    result[key] = (compo as any)[key];
   });
   return result;
 }
@@ -231,7 +234,7 @@ export class Correspondent {
             identifyValue(inputValue) !== valueIdentity)
         ) {
           output[entityId] = output[entityId] || {};
-          output[entityId][componentId] = getComponentValue(compo as any);
+          output[entityId][componentId] = getComponentValue(compo as any, Component.schema);
         }
       }
     }
