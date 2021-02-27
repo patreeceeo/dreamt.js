@@ -42,6 +42,7 @@ interface IComponentOptsFull<TData> {
   write: (compo: Component<TData>) => any
   read: (compo: Component<TData>, data: TData) => void
   writeCache: (data: any) => any
+  allow: (compo: Component<TData>) => boolean
 }
 
 type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>
@@ -142,7 +143,8 @@ export class Correspondent {
       if(c) {
         c.value = value;
       }
-    }
+    },
+    allow: (_compo) => true
   }
   _world: ECSY.World;
 
@@ -223,21 +225,24 @@ export class Correspondent {
         componentId,
         Component,
       ] of this.getComponentIterator()) {
-        const writeCache =
-          this.getComponentOpt(componentId, "writeCache")
-        const write = this.getComponentOpt(componentId, "write");
+        const allow = this.getComponentOpt(componentId, "allow");
         const compo = entity.getComponent(Component);
-        const valueIdentity = writeCache(write(compo as any));
-        const cacheValue = cache[entityId]
-          ? cache[entityId][componentId]
-          : undefined;
-        if (
-          compo &&
-          (cacheValue === undefined ||
-            cacheValue !== valueIdentity)
-        ) {
-          output[entityId] = output[entityId] || {};
-          output[entityId][componentId] = write(compo);
+        if(allow(compo!)) {
+          const writeCache =
+            this.getComponentOpt(componentId, "writeCache")
+          const write = this.getComponentOpt(componentId, "write");
+          const valueIdentity = writeCache(write(compo as any));
+          const cacheValue = cache[entityId]
+            ? cache[entityId][componentId]
+            : undefined;
+          if (
+            compo &&
+            (cacheValue === undefined ||
+              cacheValue !== valueIdentity)
+          ) {
+            output[entityId] = output[entityId] || {};
+            output[entityId][componentId] = write(compo);
+          }
         }
       }
     }

@@ -102,6 +102,16 @@ describe("Correspondent", () => {
     sut.registerComponent("writeCache", ComplexComponent, {
       writeCache: ({part1, part2}) => part1 + part2,
     });
+    sut.registerComponent("allow", ComplexComponent, {
+      allow: ((_compo) => {
+        let allow = true;
+        return () => {
+          const retval = allow;
+          allow = false;
+          return retval;
+        }
+      })()
+    });
 
     const entity = sut.createEntity("a").addComponent(ComplexComponent, {
       value: {
@@ -119,7 +129,11 @@ describe("Correspondent", () => {
             part1: "baz",
             part2: "bar",
           },
-          write_read: "baz,bar"
+          write_read: "baz,bar",
+          allow: {
+            part1: "baz",
+            part2: "bar"
+          }
         },
       },
       remove: {},
@@ -137,6 +151,17 @@ describe("Correspondent", () => {
     sut.consumeDiff(diff);
 
     expect((entity.getComponent(ComplexComponent) as ComplexComponent)?.value?.part2).toEqual("bap");
+
+    updateComponent(entity, ComplexComponent, { value: { part1: "give", part2: "take" } });
+
+    expect(sut.produceDiff(cache)).toEqual({
+      upsert: {
+        a: expect.not.objectContaining({
+          allow: expect.anything()
+        })
+      },
+      remove: {},
+    });
   });
 
   // TODO write separate tests for updateCache?
