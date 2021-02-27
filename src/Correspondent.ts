@@ -1,7 +1,5 @@
 import * as ECSY from "ecsy";
 import { ComponentConstructor, Component } from "./index";
-import { merge } from "lodash";
-import { updateComponent } from "./ecsExtensions";
 
 export interface IEntityComponentData {
   [entityId: string]: {
@@ -24,13 +22,13 @@ export interface IUpdateEntitiesMessage {
   body: IEntityComponentDiff;
 }
 
-// TODO may need to do object pooling for optimization
+// TODO(optimization) object pooling
 
-export function getComponentValue(compo: Component<any>, schema: ComponentConstructor<any>["schema"]) {
+export function extractComponentProps(compo: Component<any>, schema: ECSY.ComponentSchema) {
   const result = {} as any;
   if(!schema) {
     if(process.env.NODE_ENV === "development") {
-      console.warn("Trying to use a component without a schema with Correspondent. This won't work.")
+      console.warn("Trying to use a component without a schema with extractComponentProps.")
     }
     return;
   }
@@ -40,9 +38,13 @@ export function getComponentValue(compo: Component<any>, schema: ComponentConstr
   return result;
 }
 
-interface IComponentOpts {
-  writeCache?: (c: ComponentConstructor) => any
+interface IComponentOptsFull<TData> {
+  write: (compo: Component<TData>) => any
+  read: (compo: Component<TData>, data: TData) => void
+  writeCache: (data: any) => any
 }
+
+type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>
 
 /**
  * A possibly novel approach to wire formatting data in server-backed networked
@@ -127,30 +129,20 @@ export class Correspondent {
         Object.keys(diff.upsert).length === 0;
   }
 
-  static updateCache(cache: IEntityComponentData, diff: IEntityComponentDiff) {
-    merge(cache, diff.upsert);
-
-    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
-      if (entityData === true) {
-        delete cache[entityId];
-      } else {
-        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
-          if (shouldBeRemoved) {
-            delete cache[entityId][componentId];
-          }
-        });
-      }
-    });
-  }
-
   _entityMap = new Map<string, ECSY.Entity>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<
     string,
-    IComponentOpts
+    IComponentOpts<any>
   >();
-  _defaultComponentOpts: IComponentOpts = {
-    writeCache: (c) => (c as any)?.value,
+  _defaultComponentOpts: IComponentOptsFull<any> = {
+    write: (c: any) => c?.value,
+    writeCache: (v: any) => v,
+    read: (c: any, value: any) => {
+      if(c) {
+        c.value = value;
+      }
+    }
   }
   _world: ECSY.World;
 
@@ -198,10 +190,10 @@ export class Correspondent {
    * instances of registered entities will be sent and recieved over the socket.
    * TODO should allowed components only be passed in constructor?
    */
-  registerComponent(
+  registerComponent<TData>(
     id: string,
-    Component: ComponentConstructor,
-    opts?: IComponentOpts
+    Component: ComponentConstructor<Component<TData>>,
+    opts?: IComponentOpts<TData>
   ) {
     this._componentMap.set(id, Component);
     if (opts) {
@@ -218,13 +210,13 @@ export class Correspondent {
     return this._componentMap.entries();
   }
 
-  getComponentOpt(componentId: string, optName: keyof IComponentOpts) {
+  getComponentOpt<K extends keyof IComponentOpts<any>>(componentId: string, optName: K): IComponentOptsFull<any>[K] {
     const opts = this._componentOptsMap.get(componentId);
-    return opts ? opts[optName] : this._defaultComponentOpts[optName];
+    return opts && opts[optName] ? (opts[optName] as IComponentOptsFull<any>[K]) : this._defaultComponentOpts[optName];
   }
 
   /** Should not have side-effects TODO make this a pure function rather than a method? */
-  _getUpserts(input: IEntityComponentData): IEntityComponentData {
+  _getUpserts(cache: IEntityComponentData): IEntityComponentData {
     const output: IEntityComponentData = {};
     for (const [entityId, entity] of this.getEntityIterator()) {
       for (const [
@@ -233,18 +225,19 @@ export class Correspondent {
       ] of this.getComponentIterator()) {
         const writeCache =
           this.getComponentOpt(componentId, "writeCache")
+        const write = this.getComponentOpt(componentId, "write");
         const compo = entity.getComponent(Component);
-        const valueIdentity = writeCache!(compo as any);
-        const inputValue = input[entityId]
-          ? input[entityId][componentId]
+        const valueIdentity = writeCache(write(compo as any));
+        const cacheValue = cache[entityId]
+          ? cache[entityId][componentId]
           : undefined;
         if (
           compo &&
-          (inputValue === undefined ||
-            writeCache!(inputValue) !== valueIdentity)
+          (cacheValue === undefined ||
+            cacheValue !== valueIdentity)
         ) {
           output[entityId] = output[entityId] || {};
-          output[entityId][componentId] = getComponentValue(compo as any, Component.schema);
+          output[entityId][componentId] = write(compo);
         }
       }
     }
@@ -295,18 +288,19 @@ export class Correspondent {
   consumeDiff(diff: IEntityComponentDiff): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
-        const entity = this.getEntityById(entityId);
+        const entity = this.getEntityById(entityId) || this.createEntity(entityId);
         const Component = this.getComponentById(componentId)!;
+
+        if(!entity.hasComponent(Component)) {
+          entity.addComponent(Component);
+        }
+
+        const read = this.getComponentOpt(componentId, "read");
+        const compo = entity.getMutableComponent(Component);
         // TODO invariant(Component) since component types should be static,
         // therefore the same across all clients. But what if components are
         // allow-listed conditionally?
-        if (entity?.hasComponent(Component)) {
-          updateComponent(entity, Component!, componentData);
-        } else if (entity) {
-          entity.addComponent(Component, componentData);
-        } else {
-          this.createEntity(entityId).addComponent(Component, componentData);
-        }
+        read(compo!, componentData);
       });
     });
 
@@ -322,5 +316,27 @@ export class Correspondent {
       }
     });
     return this;
+  }
+
+  updateCache(cache: IEntityComponentData, diff: IEntityComponentDiff) {
+    Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
+      Object.entries(entityData).forEach(([componentId, componentData]) => {
+        const writeCache = this.getComponentOpt(componentId, "writeCache");
+        cache[entityId] = cache[entityId] || {};
+        cache[entityId][componentId] = writeCache(componentData);
+      });
+    });
+
+    Object.entries(diff.remove).forEach(([entityId, entityData]) => {
+      if (entityData === true) {
+        delete cache[entityId];
+      } else {
+        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
+          if (shouldBeRemoved) {
+            delete cache[entityId][componentId];
+          }
+        });
+      }
+    });
   }
 }

@@ -6,7 +6,6 @@ import {
 import * as ECSY from "ecsy";
 import { cast } from "./testUtils";
 import { updateComponent } from "./ecsExtensions";
-import { ComponentConstructor } from "./index";
 
 function iterableToArray<I, A = I>(
   it: Iterable<I>,
@@ -81,48 +80,63 @@ describe("Correspondent", () => {
     expect(getComponentList(sut)).toEqual([ComponentA, ComponentB]);
   });
 
-  test("registerComponent opt: writeCache", () => {
-    class ComplexComponent extends ECSY.Component<any> {
-      static schema = {
-        part1: {
-          type: ECSY.Types.String,
-        },
-        part2: {
-          type: ECSY.Types.String,
-        },
-      };
-      part1?: string;
-      part2?: string;
+  test("registerComponent opts", () => {
+    class ComplexComponent extends ECSY.Component<{value: {part1: string, part2: string}}> {
+      value?: {
+        part1: string;
+        part2: string;
+      }
     }
 
     const world = new ECSY.World();
     const sut = constructSut(world);
     const cache = {};
 
-    sut.registerComponent("complex", ComplexComponent, {
-      writeCache: (c: ComponentConstructor) => (c as any).part1 + (c as any).part2,
+    sut.registerComponent("write_read", ComplexComponent, {
+      write: (c) => (c as ComplexComponent).value?.part1 + "," + (c as ComplexComponent).value?.part2,
+      read: (c, str) => {
+        const [part1, part2] = (str as string).split(',');
+        (c as any).value = {part1, part2};
+      }
+    });
+    sut.registerComponent("writeCache", ComplexComponent, {
+      writeCache: ({part1, part2}) => part1 + part2,
     });
 
     const entity = sut.createEntity("a").addComponent(ComplexComponent, {
-      part1: "foo",
-      part2: "bar",
+      value: {
+        part1: "foo",
+        part2: "bar",
+      }
     });
 
-    sut.produceDiff(cache);
-
-    updateComponent(entity, ComplexComponent, { part1: "baz" });
+    updateComponent(entity, ComplexComponent, { value: { part1: "baz", part2: "bar" } });
 
     expect(sut.produceDiff(cache)).toEqual({
       upsert: {
         a: {
-          complex: {
+          writeCache: {
             part1: "baz",
             part2: "bar",
           },
+          write_read: "baz,bar"
         },
       },
       remove: {},
     });
+
+    const diff = {
+      upsert: {
+        a: {
+          write_read: "baz,bap"
+        },
+      },
+      remove: {},
+    };
+
+    sut.consumeDiff(diff);
+
+    expect((entity.getComponent(ComplexComponent) as ComplexComponent)?.value?.part2).toEqual("bap");
   });
 
   // TODO write separate tests for updateCache?
@@ -157,7 +171,7 @@ describe("Correspondent", () => {
       const diffProduced = sut.produceDiff(cache);
       expect(diffProduced).toEqual(diffExpected);
 
-      Correspondent.updateCache(cache, diffProduced);
+      sut.updateCache(cache, diffProduced);
 
       expect(cache).toEqual(cacheExpected);
     }
@@ -169,7 +183,7 @@ describe("Correspondent", () => {
     ) {
       sut.consumeDiff(diffToConsume);
 
-      Correspondent.updateCache(cache, diffToConsume);
+      sut.updateCache(cache, diffToConsume);
 
       expect(cache).toEqual(cacheExpected);
     }
@@ -186,7 +200,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anEntity: {
-            numero: { value: 1 },
+            numero: 1,
           },
         },
         remove: {},
@@ -194,7 +208,7 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
+          numero: 1,
         },
       }
     );
@@ -203,7 +217,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anotherEntity: {
-            numero: { value: 6 },
+            numero: 6,
           },
         },
         remove: {},
@@ -211,10 +225,10 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
+          numero: 1,
         },
         anotherEntity: {
-          numero: { value: 6 },
+          numero: 6,
         },
       }
     );
@@ -230,7 +244,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anEntity: {
-            varchar: { value: "Hai!" },
+            varchar: "Hai!",
           },
         },
         remove: {},
@@ -238,11 +252,11 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
-          varchar: { value: "Hai!" },
+          numero: 1,
+          varchar: "Hai!",
         },
         anotherEntity: {
-          numero: { value: 6 },
+          numero: 6,
         },
       }
     );
@@ -251,7 +265,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anotherEntity: {
-            varchar: { value: "Boo!" },
+            varchar: "Boo!",
           },
         },
         remove: {},
@@ -259,12 +273,12 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
-          varchar: { value: "Hai!" },
+          numero: 1,
+          varchar: "Hai!",
         },
         anotherEntity: {
-          numero: { value: 6 },
-          varchar: { value: "Boo!" },
+          numero: 6,
+          varchar: "Boo!",
         },
       }
     );
@@ -279,7 +293,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anEntity: {
-            varchar: { value: "Bai!" },
+            varchar: "Bai!",
           },
         },
         remove: {},
@@ -287,12 +301,12 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
-          varchar: { value: "Bai!" },
+          numero: 1,
+          varchar: "Bai!",
         },
         anotherEntity: {
-          numero: { value: 6 },
-          varchar: { value: "Boo!" },
+          numero: 6,
+          varchar: "Boo!",
         },
       }
     );
@@ -302,7 +316,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anotherEntity: {
-            varchar: { value: "Ahh!" },
+            varchar: "Ahh!",
           },
         },
         remove: {},
@@ -310,12 +324,12 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
-          varchar: { value: "Bai!" },
+          numero: 1,
+          varchar: "Bai!",
         },
         anotherEntity: {
-          numero: { value: 6 },
-          varchar: { value: "Ahh!" },
+          numero: 6,
+          varchar: "Ahh!",
         },
       }
     );
@@ -339,11 +353,11 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
+          numero: 1,
         },
         anotherEntity: {
-          numero: { value: 6 },
-          varchar: { value: "Ahh!" },
+          numero: 6,
+          varchar: "Ahh!",
         },
       }
     );
@@ -360,10 +374,10 @@ describe("Correspondent", () => {
       cache,
       {
         anEntity: {
-          numero: { value: 1 },
+          numero: 1,
         },
         anotherEntity: {
-          numero: { value: 6 },
+          numero: 6,
         },
       }
     );
@@ -384,7 +398,7 @@ describe("Correspondent", () => {
       cache,
       {
         anotherEntity: {
-          numero: { value: 6 },
+          numero: 6,
         },
       }
     );
