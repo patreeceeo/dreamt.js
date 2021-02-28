@@ -24,11 +24,16 @@ export interface IUpdateEntitiesMessage {
 
 // TODO(optimization) object pooling
 
-export function extractComponentProps(compo: Component<any>, schema: ECSY.ComponentSchema) {
+export function extractComponentProps(
+  compo: Component<any>,
+  schema: ECSY.ComponentSchema
+) {
   const result = {} as any;
-  if(!schema) {
-    if(process.env.NODE_ENV === "development") {
-      console.warn("Trying to use a component without a schema with extractComponentProps.")
+  if (!schema) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "Trying to use a component without a schema with extractComponentProps."
+      );
     }
     return;
   }
@@ -39,19 +44,18 @@ export function extractComponentProps(compo: Component<any>, schema: ECSY.Compon
 }
 
 interface IComponentOptsFull<TData> {
-  write: (compo: Component<TData>) => any
-  read: (compo: Component<TData>, data: TData) => void
-  writeCache: (data: any) => any
-  allow: (compo: Component<TData>) => boolean
+  write: (compo: Component<TData>) => any;
+  read: (compo: Component<TData>, data: TData) => void;
+  writeCache: (data: any) => any;
+  allow: (compo: Component<TData>) => boolean;
 }
 
-type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>
+type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>;
 
 /**
- * A possibly novel approach to wire formatting data in server-backed networked
- * games. How it works: Comparing the local game state with a cached
- * representation of the game state, it produces a diff. The diff contains two
- * kinds of operations:
+ * A message producer and consumer for diff/delta-based networking of Entities.
+ * How it works: Comparing the local game state with a cached representation of
+ * the game state, it produces a diff. The diff contains two kinds of operations:
  *
  * ### upsert
  *
@@ -124,28 +128,26 @@ type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>
  * each entity and each component type which it uses when producing and consuming diffs.
  */
 export class Correspondent {
-
   static isEmptyDiff(diff: IEntityComponentDiff) {
-    return Object.keys(diff.remove).length === 0 &&
-        Object.keys(diff.upsert).length === 0;
+    return (
+      Object.keys(diff.remove).length === 0 &&
+      Object.keys(diff.upsert).length === 0
+    );
   }
 
   _entityMap = new Map<string, ECSY.Entity>();
   _componentMap = new Map<string, ComponentConstructor>();
-  _componentOptsMap = new Map<
-    string,
-    IComponentOpts<any>
-  >();
+  _componentOptsMap = new Map<string, IComponentOpts<any>>();
   _defaultComponentOpts: IComponentOptsFull<any> = {
     write: (c: any) => c?.value,
     writeCache: (v: any) => v,
     read: (c: any, value: any) => {
-      if(c) {
+      if (c) {
         c.value = value;
       }
     },
-    allow: (_compo) => true
-  }
+    allow: (_compo) => true,
+  };
   _world: ECSY.World;
 
   constructor(world: ECSY.World) {
@@ -212,24 +214,25 @@ export class Correspondent {
     return this._componentMap.entries();
   }
 
-  getComponentOpt<K extends keyof IComponentOpts<any>>(componentId: string, optName: K): IComponentOptsFull<any>[K] {
+  getComponentOpt<K extends keyof IComponentOpts<any>>(
+    componentId: string,
+    optName: K
+  ): IComponentOptsFull<any>[K] {
     const opts = this._componentOptsMap.get(componentId);
-    return opts && opts[optName] ? (opts[optName] as IComponentOptsFull<any>[K]) : this._defaultComponentOpts[optName];
+    return opts && opts[optName]
+      ? (opts[optName] as IComponentOptsFull<any>[K])
+      : this._defaultComponentOpts[optName];
   }
 
   /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(cache: IEntityComponentData): IEntityComponentData {
     const output: IEntityComponentData = {};
     for (const [entityId, entity] of this.getEntityIterator()) {
-      for (const [
-        componentId,
-        Component,
-      ] of this.getComponentIterator()) {
+      for (const [componentId, Component] of this.getComponentIterator()) {
         const allow = this.getComponentOpt(componentId, "allow");
         const compo = entity.getComponent(Component);
-        if(allow(compo!)) {
-          const writeCache =
-            this.getComponentOpt(componentId, "writeCache")
+        if (allow(compo!)) {
+          const writeCache = this.getComponentOpt(componentId, "writeCache");
           const write = this.getComponentOpt(componentId, "write");
           const valueIdentity = writeCache(write(compo as any));
           const cacheValue = cache[entityId]
@@ -237,8 +240,7 @@ export class Correspondent {
             : undefined;
           if (
             compo &&
-            (cacheValue === undefined ||
-              cacheValue !== valueIdentity)
+            (cacheValue === undefined || cacheValue !== valueIdentity)
           ) {
             output[entityId] = output[entityId] || {};
             output[entityId][componentId] = write(compo);
@@ -293,10 +295,11 @@ export class Correspondent {
   consumeDiff(diff: IEntityComponentDiff): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
-        const entity = this.getEntityById(entityId) || this.createEntity(entityId);
+        const entity =
+          this.getEntityById(entityId) || this.createEntity(entityId);
         const Component = this.getComponentById(componentId)!;
 
-        if(!entity.hasComponent(Component)) {
+        if (!entity.hasComponent(Component)) {
           entity.addComponent(Component);
         }
 
@@ -323,7 +326,10 @@ export class Correspondent {
     return this;
   }
 
-  updateCache(cache: IEntityComponentData, diff: IEntityComponentDiff) {
+  updateCache(
+    cache: IEntityComponentData,
+    diff: IEntityComponentDiff
+  ): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
         const writeCache = this.getComponentOpt(componentId, "writeCache");
@@ -343,5 +349,6 @@ export class Correspondent {
         });
       }
     });
+    return this;
   }
 }

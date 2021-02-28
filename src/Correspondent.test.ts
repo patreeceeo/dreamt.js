@@ -103,7 +103,7 @@ describe("Correspondent", () => {
       writeCache: ({part1, part2}) => part1 + part2,
     });
     sut.registerComponent("allow", ComplexComponent, {
-      allow: ((_compo) => {
+      allow: (() => {
         let allow = true;
         return () => {
           const retval = allow;
