@@ -26,3 +26,4 @@ export { addComponent, removeComponent, replaceComponent, updateComponent } from
 
 export { Correspondent, IEntityComponentData, IEntityComponentDiff, IEntityComponentFlags } from './Correspondent';
 
+export { GameLoop } from './GameLoop';
