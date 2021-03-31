@@ -53,6 +53,7 @@ interface IComponentOptsFull<TData> {
 type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>;
 
 /**
+* TODO reduce or eliminate object creation
  * A message producer and consumer for diff/delta-based networking of Entities.
  * How it works: Comparing the local game state with a cached representation of
  * the game state, it produces a diff. The diff contains two kinds of operations:

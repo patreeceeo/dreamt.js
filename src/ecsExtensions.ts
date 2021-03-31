@@ -37,9 +37,3 @@ export function updateComponent<T extends {}>(
   }
 }
 
-export function copyMap<K, V>(target: Map<K, V>, source: Map<K, V>) {
-  source.forEach((value, key) => {
-    target.set(key, value);
-  });
-}
-

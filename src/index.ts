@@ -22,8 +22,7 @@ import { Component, ComponentConstructor as ComponentConstructorECSY } from 'ecs
 
 export type ComponentConstructor<T extends Component<any> = Component<any>> = ComponentConstructorECSY<T>;
 
-export { addComponent, removeComponent, replaceComponent, updateComponent, copyMap } from "./ecsExtensions";
-
-export { EntityRenderConnector, RenderState } from "./render";
+export { addComponent, removeComponent, replaceComponent, updateComponent } from "./ecsExtensions";
 
 export { Correspondent } from './Correspondent';
+
