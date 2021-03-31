@@ -24,5 +24,5 @@ export type ComponentConstructor<T extends Component<any> = Component<any>> = Co
 
 export { addComponent, removeComponent, replaceComponent, updateComponent } from "./ecsExtensions";
 
-export { Correspondent } from './Correspondent';
+export { Correspondent, IEntityComponentData, IEntityComponentDiff, IEntityComponentFlags } from './Correspondent';
 

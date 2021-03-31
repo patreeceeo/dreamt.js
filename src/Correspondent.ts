@@ -18,10 +18,6 @@ export interface IEntityComponentDiff {
   remove: IEntityComponentFlags;
 }
 
-export interface IUpdateEntitiesMessage {
-  body: IEntityComponentDiff;
-}
-
 // TODO(optimization) object pooling
 
 export function extractComponentProps(
