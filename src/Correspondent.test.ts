@@ -475,4 +475,39 @@ describe("Correspondent", () => {
       })
     ).toBe(false);
   });
+
+  test("createEmptyDiff", () => {
+    const result = Correspondent.createEmptyDiff();
+    expect(result).toEqual({
+      upsert: {},
+      remove: {}
+    })
+  })
+
+  test("setUpsert", () => {
+    const diff = Correspondent.createEmptyDiff();
+    expect(Correspondent.setUpsert(diff, "anEnt", {c1: 1})).toEqual({
+      upsert: {
+        anEnt: {
+          c1: 1
+        }
+      },
+      remove: {}
+    })
+  });
+
+  test("getUpsert", () => {
+    const diff = {
+      upsert: {
+        anEnt: {
+          c1: 1
+        }
+      },
+      remove: {}
+    };
+
+    expect(Correspondent.getUpsert(diff, "anEnt")).toEqual({
+      c1: 1
+    })
+  });
 });

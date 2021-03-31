@@ -131,6 +131,22 @@ export class Correspondent {
     );
   }
 
+  static createEmptyDiff(): IEntityComponentDiff {
+    return {
+      upsert: {},
+      remove: {}
+    };
+  }
+
+  static setUpsert(target: IEntityComponentDiff, entityId: string, componentData: any) {
+    target.upsert[entityId] = componentData;
+    return target;
+  }
+
+  static getUpsert(target: IEntityComponentDiff, entityId: string) {
+    return target.upsert[entityId];
+  }
+
   _entityMap = new Map<string, ECSY.Entity>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<string, IComponentOpts<any>>();
