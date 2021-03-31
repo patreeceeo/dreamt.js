@@ -53,7 +53,6 @@ interface IComponentOptsFull<TData> {
 type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>;
 
 /**
-* TODO reduce or eliminate object creation
  * A message producer and consumer for diff/delta-based networking of Entities.
  * How it works: Comparing the local game state with a cached representation of
  * the game state, it produces a diff. The diff contains two kinds of operations:
@@ -150,6 +149,11 @@ export class Correspondent {
     allow: (_compo) => true,
   };
   _world: ECSY.World;
+
+  diff: IEntityComponentDiff = {
+    upsert: {},
+    remove: {}
+  }
 
   constructor(world: ECSY.World) {
     this._world = world;
@@ -278,13 +282,12 @@ export class Correspondent {
    * world instance.
    *
    * @param input Represents the network's world (entities and components)
-   * @returns The operations AKA a diff.
+   * @returns target.
    */
   produceDiff(cache: IEntityComponentData): IEntityComponentDiff {
-    return {
-      upsert: this._getUpserts(cache),
-      remove: this._getRemoves(cache),
-    };
+    this.diff.upsert = this._getUpserts(cache);
+    this.diff.remove = this._getRemoves(cache);
+    return this.diff;
   }
 
   /**

@@ -80,6 +80,14 @@ describe("Correspondent", () => {
     expect(getComponentList(sut)).toEqual([ComponentA, ComponentB]);
   });
 
+  test("root object reuse", () => {
+    const world = new ECSY.World();
+    const sut = constructSut(world)
+    const cache = {};
+
+    expect(sut.produceDiff(cache)).toBe(sut.diff);
+  });
+
   test("registerComponent opts", () => {
     class ComplexComponent extends ECSY.Component<{value: {part1: string, part2: string}}> {
       value?: {
