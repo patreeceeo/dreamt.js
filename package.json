@@ -1,6 +1,6 @@
 {
   "name": "dreamt",
-  "version": "0.5.3",
+  "version": "0.5.5",
   "description": "Assorted reusable bits of game code and, aspirationally, a flexible, 3D, performant, networked game engine",
   "keywords": [
     "typescript",
@@ -49,6 +49,7 @@
     "version": "npm run build && npm run changelog:update"
   },
   "devDependencies": {
+    "@testing-library/react-hooks": "^5.1.1",
     "@types/jest": "^26.0.20",
     "@types/lodash": "^4.14.168",
     "@types/node": "^14.0.5",

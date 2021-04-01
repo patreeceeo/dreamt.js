@@ -1,5 +1,6 @@
 import { GameLoop } from "./GameLoop";
 import { _window } from "./globals";
+import { renderHook } from '@testing-library/react-hooks';
 
 jest.mock("./globals", () => {
   return {
@@ -56,6 +57,28 @@ describe("GameLoop", () => {
     jest.advanceTimersByTime((1000 / 20) * 3);
 
     expect(execute).toHaveBeenCalledTimes(3);
+  });
+
+  test("useTick hook", () => {
+    const sut = new GameLoop(()=>{}, 20);
+    const spy1 = jest.fn();
+    const spy2 = jest.fn();
+
+    const {rerender} = renderHook(({callback}) => sut.useTick(callback), {initialProps: { callback: spy1 }})
+
+    sut.start();
+
+    jest.advanceTimersByTime((1000 / 20) * 3);
+
+    expect(spy1).toHaveBeenCalledTimes(3);
+
+    rerender({callback: spy2});
+    spy1.mockClear();
+
+    jest.advanceTimersByTime((1000 / 20) * 3);
+
+    expect(spy2).toHaveBeenCalledTimes(3);
+    expect(spy1).not.toHaveBeenCalled();
   });
 
   test.todo("adjust");

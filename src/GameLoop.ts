@@ -1,4 +1,5 @@
 import { _window } from "./globals";
+import { useEffect, useRef } from "react";
 
 interface IExecuteFn {
   (deltaMs: number, timeMs: number): void;
@@ -14,8 +15,7 @@ export class GameLoop {
   _frequencyHz: number;
   _options: IOptions;
   _intervalId: any;
-
-  _foo: any = null;
+  _tickCallbacks: IExecuteFn[] = [];
 
   constructor(
     executeFn: IExecuteFn,
@@ -44,10 +44,29 @@ export class GameLoop {
       // get more accuracy with performance.now()?
       timeMs += intervalMs;
       this._executeFn(intervalMs, timeMs);
+
+      this._tickCallbacks.forEach((cb) => {
+        cb(intervalMs, timeMs);
+      })
     }, intervalMs);
   }
 
   stop() {
     clearInterval(this._intervalId);
+  }
+
+  useTick(callback: IExecuteFn) {
+    const savedCallback = useRef<IExecuteFn>();
+
+    useEffect(() => {
+      if (savedCallback.current && savedCallback.current != callback) {
+        const indexToRemove = this._tickCallbacks.indexOf(savedCallback.current)
+        this._tickCallbacks.splice(indexToRemove, 1)
+      }
+
+      savedCallback.current = callback;
+
+      this._tickCallbacks.push(callback);
+    }, [callback]);
   }
 }
