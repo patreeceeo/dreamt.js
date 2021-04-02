@@ -41,13 +41,10 @@ describe("GameLoop", () => {
 
   test("opt: pauseOnWindowBlur", () => {
     const execute = jest.fn();
-
     const sut = new GameLoop(execute, 20, { pauseOnWindowBlur: true });
 
     sut.start();
-
     (_window as any).capturedBlurListener();
-
     jest.advanceTimersByTime((1000 / 20) * 3);
 
     expect(execute).not.toHaveBeenCalled();
@@ -57,6 +54,14 @@ describe("GameLoop", () => {
     jest.advanceTimersByTime((1000 / 20) * 3);
 
     expect(execute).toHaveBeenCalledTimes(3);
+
+    // Time should pick up where it left off
+
+    (_window as any).capturedBlurListener();
+    (_window as any).capturedFocusListener();
+    jest.advanceTimersByTime((1000 / 20) * 3);
+
+    expect(execute).toHaveBeenCalledWith(50, 6 * 50)
   });
 
   test("useTick hook", () => {

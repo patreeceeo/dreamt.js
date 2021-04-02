@@ -16,6 +16,7 @@ export class GameLoop {
   _options: IOptions;
   _intervalId: any;
   _tickCallbacks: IExecuteFn[] = [];
+  _timeMs = 0;
 
   constructor(
     executeFn: IExecuteFn,
@@ -31,27 +32,31 @@ export class GameLoop {
     this._justStart();
 
     if (this._options.pauseOnWindowBlur) {
-      _window.addEventListener("blur", this.stop.bind(this));
+      _window.addEventListener("blur", this.pause.bind(this));
       _window.addEventListener("focus", this._justStart.bind(this));
     }
   }
 
   _justStart() {
     const intervalMs = 1000 / this._frequencyHz;
-    let timeMs = 0;
     this._intervalId = setInterval(() => {
       // TODO naively incrementing time by interval duration
       // get more accuracy with performance.now()?
-      timeMs += intervalMs;
-      this._executeFn(intervalMs, timeMs);
+      this._timeMs += intervalMs;
+      this._executeFn(intervalMs, this._timeMs);
 
       this._tickCallbacks.forEach((cb) => {
-        cb(intervalMs, timeMs);
+        cb(intervalMs, this._timeMs);
       })
     }, intervalMs);
   }
 
+  pause() {
+    clearInterval(this._intervalId);
+  }
+
   stop() {
+    this._timeMs = 0;
     clearInterval(this._intervalId);
   }
 
