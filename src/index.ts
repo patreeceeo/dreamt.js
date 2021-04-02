@@ -28,4 +28,4 @@ export { Correspondent, IEntityComponentData, IEntityComponentDiff, IEntityCompo
 
 export { GameLoop } from './GameLoop';
 
-export { ViewModel } from './ViewModel';
+export { DualModel } from './DualModel';
