@@ -1,3 +1,4 @@
+import logger from './logger';
 interface IModelFactory<T> {
   (): T
 }
@@ -8,7 +9,7 @@ interface IModelFactory<T> {
  * phrases "underlying system" or just "system" in place of ECS to be more
  * agnostic.
  */
-export class ViewModel<TModel> {
+export class ViewModel<TModel extends Object | Array<any> | number | string | boolean> {
   _fromView: TModel;
   _fromSystem: TModel;
   _dirty = false;
@@ -20,23 +21,28 @@ export class ViewModel<TModel> {
   set fromView(model: TModel) {
     this._dirty = true;
     this._fromView = model;
+    logger.debug(`ViewModel<${this._fromView.constructor.name}> data received from view:`, model)
   }
 
   set fromViewPartial(partial: Partial<TModel>) {
-    this._dirty = true;
-    this._fromView = Object.assign({}, this._fromView, partial);
+    this.fromView = Object.assign({}, this._fromView, partial);
   }
 
   get toSystem() {
-    return this._fromView;
+    const retval = this._fromView;
+    logger.debug(`ViewModel<${this._fromView.constructor.name}> data sent to system:`, retval)
+    return retval;
   }
 
   set fromSystem(model: TModel) {
     this._fromSystem = model;
+    logger.debug(`ViewModel<${this._fromSystem.constructor.name}> data received from system:`, model)
   }
 
   get toView() {
-    return this._fromSystem;
+    const retval = this._fromSystem;
+    logger.debug(`ViewModel<${this._fromView.constructor.name}> data sent to view:`, retval)
+    return retval;
   }
 
   get isDirty () {
