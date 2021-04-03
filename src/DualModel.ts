@@ -1,10 +1,13 @@
 import logger from "./logger";
+import debounce from "debounce";
+
 interface IModelFactory<T> {
   (): T;
 }
 
 interface IOptions {
   debug?: boolean;
+  debounceRequestMs?: number
 }
 
 /**
@@ -34,6 +37,9 @@ export class DualModel<
     this._request = modelFactory();
     this._actual = modelFactory();
     this._options = options;
+    if(this._options.debounceRequestMs) {
+      this.setRequest = debounce(this.setRequest.bind(this), this._options.debounceRequestMs);
+    }
   }
 
   setRequest(model: TModel) {

@@ -14,7 +14,7 @@ export interface IWorld extends Partial<RealWorld> {
 export interface IEntity extends Partial<RealEntity> {}
 
 
-export const asyncActivity = () => new Promise((resolve) => setImmediate(resolve));
+export const asyncActivity = (delayMs = 0) => new Promise((resolve) => setTimeout(resolve, delayMs));
 
 export function getSpyCallArg(fn: any, callIdx: number, argIdx: number) {
   return (fn as jasmine.Spy).calls.argsFor(callIdx)[argIdx];
