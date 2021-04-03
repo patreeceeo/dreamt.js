@@ -7,7 +7,7 @@ interface IModelFactory<T> {
 
 interface IOptions {
   debug?: boolean;
-  debounceRequestMs?: number
+  debounceRequestMs?: number;
 }
 
 /**
@@ -27,18 +27,22 @@ export class DualModel<
   _request: TModel;
   _actual: TModel;
   _dirty = false;
-  _options: IOptions;
 
-  _logDebugMsg(msg: string, ...args: any[]) {
-    if (this._options.debug) logger.debug(msg, ...args);
+  _logDebugMsg(...args: any[]) {
+    void args;
   }
 
   constructor(modelFactory: IModelFactory<TModel>, options: IOptions = {}) {
     this._request = modelFactory();
     this._actual = modelFactory();
-    this._options = options;
-    if(this._options.debounceRequestMs) {
-      this.setRequest = debounce(this.setRequest.bind(this), this._options.debounceRequestMs);
+    if (options.debounceRequestMs) {
+      this.setRequest = debounce(
+        this.setRequest.bind(this),
+        options.debounceRequestMs
+      );
+    }
+    if (options.debug) {
+      this._logDebugMsg = logger.debug.bind(logger);
     }
   }
 
