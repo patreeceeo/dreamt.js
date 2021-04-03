@@ -6,17 +6,18 @@ describe("DualModel", () => {
     const sut = new DualModel<{ name: string }>(() => ({ name: "" }), {
       debounceRequestMs: 200,
     });
+    spyOn(sut, "setDirty")
 
     sut.setRequest({ name: "wolverine" });
 
     expect(sut.request).toEqual({ name: "" });
-    expect(sut.isDirty).toBe(false);
+    expect(sut.setDirty).not.toHaveBeenCalledTimes(1)
 
     // Jest's fake timers don't work with debounce for some reason
     await asyncActivity(200);
 
     expect(sut.request).toEqual({ name: "wolverine" });
-    expect(sut.isDirty).toBe(true);
+    expect(sut.setDirty).toHaveBeenCalledTimes(1)
   });
 
   test("setActual/actual", () => {
@@ -36,6 +37,14 @@ describe("DualModel", () => {
     expect(sut.isDirty).toBe(false);
     expect(sut.request).toBe(sut.actual);
     expect(sut.request).toEqual({ name: "" });
+  });
+
+  test("setDirty", () => {
+    const sut = new DualModel<{ name: string }>(() => ({ name: "" }));
+
+    sut.setDirty();
+
+    expect(sut.isDirty).toBe(true);
   });
 
   test("setRequestPart", async () => {

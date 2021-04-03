@@ -43,8 +43,8 @@ export class DualModel<
   }
 
   setRequest(model: TModel) {
-    this._dirty = true;
     this._request = model;
+    this.setDirty();
     this._logDebugMsg(
       `ViewModel<${this._actual.constructor.name}> set request:`,
       JSON.stringify(model)
@@ -83,6 +83,10 @@ export class DualModel<
 
   get isDirty() {
     return this._dirty;
+  }
+
+  setDirty() {
+    this._dirty = true;
   }
 
   clean() {
