@@ -29,3 +29,5 @@ export { Correspondent, IEntityComponentData, IEntityComponentDiff, IEntityCompo
 export { GameLoop } from './GameLoop';
 
 export { DualModel } from './DualModel';
+
+export { useStateFromComponentMap } from './reactHooks';
