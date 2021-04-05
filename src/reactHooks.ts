@@ -1,5 +1,5 @@
 import { Entity } from "ecsy";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { ComponentConstructor } from "./";
 
 function getComponentValue(
@@ -31,18 +31,29 @@ export function useStateFromComponentMap<TShape extends IShape>(
   ComponentMap: ShapeOf<TShape, ComponentConstructor>,
   includeRemoved?: boolean
 ): [ShapeOf<TShape, any>, () => void] {
-  const initialState = {} as any;
-
-  Object.entries(ComponentMap).forEach(([key, Component]) => {
-    initialState[key] = getComponentValue(entity, Component, includeRemoved);
-  });
+  const initialState = useMemo(getInitialState, [entity, ComponentMap]);
 
   const [state, setState] = useState<any>(initialState);
 
   return [
     state,
-    useCallback(syncWithComponents, [ComponentMap, includeRemoved, state, setState]),
+    useCallback(syncWithComponents, [
+      ComponentMap,
+      includeRemoved,
+      state,
+      setState,
+    ]),
   ];
+
+  function getInitialState() {
+    const result = {} as any;
+
+    Object.entries(ComponentMap).forEach(([key, Component]) => {
+      result[key] = getComponentValue(entity, Component, includeRemoved);
+    });
+
+    return result;
+  }
 
   function syncWithComponents() {
     const newState = {} as any;
