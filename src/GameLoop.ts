@@ -65,13 +65,19 @@ export class GameLoop {
 
     useEffect(() => {
       if (savedCallback.current && savedCallback.current != callback) {
-        const indexToRemove = this._tickCallbacks.indexOf(savedCallback.current)
-        this._tickCallbacks.splice(indexToRemove, 1)
+        this.offTick(savedCallback.current)
       }
 
       savedCallback.current = callback;
 
       this._tickCallbacks.push(callback);
+
+      return () => this.offTick(callback)
     }, [callback]);
+  }
+
+  offTick(callback: IExecuteFn) {
+    const indexToRemove = this._tickCallbacks.indexOf(callback)
+    this._tickCallbacks.splice(indexToRemove, 1)
   }
 }

@@ -69,7 +69,7 @@ describe("GameLoop", () => {
     const spy1 = jest.fn();
     const spy2 = jest.fn();
 
-    const {rerender} = renderHook(({callback}) => sut.useTick(callback), {initialProps: { callback: spy1 }})
+    const {rerender, unmount} = renderHook(({callback}) => sut.useTick(callback), {initialProps: { callback: spy1 }})
 
     sut.start();
 
@@ -84,6 +84,16 @@ describe("GameLoop", () => {
 
     expect(spy2).toHaveBeenCalledTimes(3);
     expect(spy1).not.toHaveBeenCalled();
+
+    // remove callback on unmount
+    spy1.mockClear();
+    spy2.mockClear();
+    unmount();
+
+    jest.advanceTimersByTime((1000 / 20) * 3);
+
+    expect(spy1).not.toHaveBeenCalled();
+    expect(spy2).not.toHaveBeenCalled();
   });
 
   test.todo("adjust");
