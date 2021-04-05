@@ -72,7 +72,7 @@ export class GameLoop {
 
       this._tickCallbacks.push(callback);
 
-      return () => this.offTick(callback)
+      // return () => this.offTick(callback)
     }, [callback]);
   }
 
