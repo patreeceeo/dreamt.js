@@ -31,7 +31,7 @@ export function useStateFromComponentMap<TShape extends IShape>(
   ComponentMap: ShapeOf<TShape, ComponentConstructor>,
   includeRemoved?: boolean
 ): [ShapeOf<TShape, any>, () => void] {
-  const initialState = useMemo(getInitialState, [entity, ComponentMap]);
+  const initialState = useMemo(getInitialState, [entity, ComponentMap, includeRemoved]);
 
   const [state, setState] = useState<any>(initialState);
 
