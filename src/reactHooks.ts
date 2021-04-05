@@ -32,14 +32,16 @@ export function useStateFromComponentMap<TShape extends IShape>(
   includeRemoved?: boolean
 ): [ShapeOf<TShape, any>, () => void] {
   const initialState = {} as any;
+
   Object.entries(ComponentMap).forEach(([key, Component]) => {
     initialState[key] = getComponentValue(entity, Component, includeRemoved);
   });
+
   const [state, setState] = useState<any>(initialState);
 
   return [
     state,
-    useCallback(syncWithComponents, [ComponentMap, includeRemoved]),
+    useCallback(syncWithComponents, [ComponentMap, includeRemoved, state, setState]),
   ];
 
   function syncWithComponents() {
@@ -50,8 +52,8 @@ export function useStateFromComponentMap<TShape extends IShape>(
       const newValue = getComponentValue(entity, Component, includeRemoved);
       if (newValue !== state[key]) {
         dirty = true;
-        newState[key] = newValue;
       }
+      newState[key] = newValue;
     });
 
     if (dirty) {

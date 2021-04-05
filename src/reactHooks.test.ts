@@ -42,4 +42,12 @@ test("useStateFromComponentMap", () => {
   rerender();
 
   expect(result.current[0]).toEqual({ c1: 11, c2: 22 });
+
+  (entity.getMutableComponent(Component2) as any).value = 222;
+
+  act(result.current[1]);
+
+  rerender();
+
+  expect(result.current[0]).toEqual({ c1: 11, c2: 222 });
 });
