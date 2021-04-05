@@ -88,11 +88,13 @@ describe("GameLoop", () => {
     // remove callback on unmount
     spy1.mockClear();
     spy2.mockClear();
+
     unmount();
+    rerender({callback: spy1});
 
     jest.advanceTimersByTime((1000 / 20) * 3);
 
-    expect(spy1).not.toHaveBeenCalled();
+    expect(spy1).toHaveBeenCalledTimes(3);
     expect(spy2).not.toHaveBeenCalled();
   });
 
