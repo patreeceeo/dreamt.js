@@ -319,6 +319,11 @@ export class Correspondent {
           this.getEntityById(entityId) || this.createEntity(entityId);
         const Component = this.getComponentById(componentId)!;
 
+        if (!Component) {
+          console.info("Nothing registered for componentId", componentId);
+          return;
+        }
+
         const read = this.getComponentOpt(componentId, "read");
         const normalComponentData = {};
         read(normalComponentData as any, componentData);
@@ -359,9 +364,11 @@ export class Correspondent {
   ): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
-        const writeCache = this.getComponentOpt(componentId, "writeCache");
-        cache[entityId] = cache[entityId] || {};
-        cache[entityId][componentId] = writeCache(componentData);
+        if (this.getComponentById(componentId)) {
+          const writeCache = this.getComponentOpt(componentId, "writeCache");
+          cache[entityId] = cache[entityId] || {};
+          cache[entityId][componentId] = writeCache(componentData);
+        }
       });
     });
 

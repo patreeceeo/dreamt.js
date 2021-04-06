@@ -318,6 +318,29 @@ describe("Correspondent", () => {
 
     expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Boo!");
 
+    /** ADD UNREGISTERED COMPONENT ** */
+    testConsume(
+      {
+        upsert: {
+          anotherEntity: {
+            topping: "cheese",
+          },
+        },
+        remove: {},
+      },
+      cache,
+      {
+        anEntity: {
+          numero: 1,
+          varchar: "Hai!",
+        },
+        anotherEntity: {
+          numero: 6,
+          varchar: "Boo!",
+        },
+      }
+    );
+
     /** UPDATE COMPONENT ** */
 
     updateComponent(anEntity, StrComponent, { value: "Bai!" });
