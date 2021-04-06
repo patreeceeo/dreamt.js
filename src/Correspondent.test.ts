@@ -369,6 +369,32 @@ describe("Correspondent", () => {
 
     expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Ahh!");
 
+    /** NON-UPDATE COMPONENT ** */
+    spyOn(anEntity, "getMutableComponent");
+    testConsume(
+      {
+        upsert: {
+          anEntity: {
+            numero: 1
+          },
+        },
+        remove: {},
+      },
+      cache,
+      {
+        anEntity: {
+          numero: 1,
+          varchar: "Bai!",
+        },
+        anotherEntity: {
+          numero: 6,
+          varchar: "Ahh!",
+        },
+      }
+    );
+
+    expect(anEntity.getMutableComponent).not.toHaveBeenCalled();
+
     /** REMOVE COMPONENT ** */
 
     // Originate removal of component

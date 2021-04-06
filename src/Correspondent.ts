@@ -134,11 +134,15 @@ export class Correspondent {
   static createEmptyDiff(): IEntityComponentDiff {
     return {
       upsert: {},
-      remove: {}
+      remove: {},
     };
   }
 
-  static setUpsert(target: IEntityComponentDiff, entityId: string, componentData: any) {
+  static setUpsert(
+    target: IEntityComponentDiff,
+    entityId: string,
+    componentData: any
+  ) {
     target.upsert[entityId] = componentData;
     return target;
   }
@@ -164,8 +168,8 @@ export class Correspondent {
 
   diff: IEntityComponentDiff = {
     upsert: {},
-    remove: {}
-  }
+    remove: {},
+  };
 
   constructor(world: ECSY.World) {
     this._world = world;
@@ -294,7 +298,7 @@ export class Correspondent {
    * world instance.
    *
    * @param input Represents the network's world (entities and components)
-   * @returns target.
+   * @returns Target.
    */
   produceDiff(cache: IEntityComponentData): IEntityComponentDiff {
     this.diff.upsert = this._getUpserts(cache);
@@ -315,16 +319,23 @@ export class Correspondent {
           this.getEntityById(entityId) || this.createEntity(entityId);
         const Component = this.getComponentById(componentId)!;
 
-        if (!entity.hasComponent(Component)) {
-          entity.addComponent(Component);
-        }
-
         const read = this.getComponentOpt(componentId, "read");
-        const compo = entity.getMutableComponent(Component);
-        // TODO invariant(Component) since component types should be static,
-        // therefore the same across all clients. But what if components are
-        // allow-listed conditionally?
-        read(compo!, componentData);
+        const normalComponentData = {};
+        read(normalComponentData as any, componentData);
+        if (!entity.hasComponent(Component)) {
+          entity.addComponent(Component, normalComponentData);
+        } else {
+          const write = this.getComponentOpt(componentId, "write");
+          // TODO invariant(Component) since component types should be static,
+          // therefore the same across all clients. But what if components are
+          // allow-listed conditionally?
+          const compo = entity.getComponent(Component);
+
+          if (write(normalComponentData as any) !== write(compo!)) {
+            const mutable = entity.getMutableComponent(Component);
+            read(mutable!, componentData);
+          }
+        }
       });
     });
 
