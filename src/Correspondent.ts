@@ -152,6 +152,7 @@ export class Correspondent {
   }
 
   _entityMap = new Map<string, ECSY.Entity>();
+  _localEntityMap = new Map<string, ECSY.Entity>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<string, IComponentOpts<any>>();
   _defaultComponentOpts: IComponentOptsFull<any> = {
@@ -192,15 +193,17 @@ export class Correspondent {
   }
 
   /** For convenience */
-  createEntity(id: string) {
+  createEntity(id: string, isLocal = true) {
     const newEntity = this._world.createEntity(id);
     this.registerEntity(id, newEntity);
+    if (isLocal) this._localEntityMap.set(id, newEntity);
     return newEntity;
   }
 
   /** For convenience */
   removeEntityById(id: string) {
     this.getEntityById(id)?.remove();
+    this._localEntityMap.delete(id);
     this.unregisterEntity(id);
   }
 
@@ -248,7 +251,7 @@ export class Correspondent {
   /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(cache: IEntityComponentData): IEntityComponentData {
     const output: IEntityComponentData = {};
-    for (const [entityId, entity] of this.getEntityIterator()) {
+    for (const [entityId, entity] of this._localEntityMap.entries()) {
       for (const [componentId, Component] of this.getComponentIterator()) {
         const allow = this.getComponentOpt(componentId, "allow");
         const compo = entity.getComponent(Component);
@@ -273,12 +276,12 @@ export class Correspondent {
   }
 
   /** Should not have side-effects */
-  _getRemoves(input: IEntityComponentData): IEntityComponentFlags {
+  _getRemoves(cache: IEntityComponentData): IEntityComponentFlags {
     const output: IEntityComponentFlags = {};
-    Object.keys(input).forEach((entityId) => {
+    Object.keys(cache).forEach((entityId) => {
       const entity = this.getEntityById(entityId);
       if (entity?.alive) {
-        const entityData = input[entityId];
+        const entityData = cache[entityId];
         Object.keys(entityData).forEach((componentId) => {
           const Component = this.getComponentById(componentId);
           if (!entity.hasComponent(Component!)) {
@@ -316,7 +319,7 @@ export class Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
       Object.entries(entityData).forEach(([componentId, componentData]) => {
         const entity =
-          this.getEntityById(entityId) || this.createEntity(entityId);
+          this.getEntityById(entityId) || this.createEntity(entityId, false);
         const Component = this.getComponentById(componentId)!;
 
         if (!Component) {
@@ -363,24 +366,30 @@ export class Correspondent {
     diff: IEntityComponentDiff
   ): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
-      Object.entries(entityData).forEach(([componentId, componentData]) => {
-        if (this.getComponentById(componentId)) {
-          const writeCache = this.getComponentOpt(componentId, "writeCache");
-          cache[entityId] = cache[entityId] || {};
-          cache[entityId][componentId] = writeCache(componentData);
-        }
-      });
+      if (this._localEntityMap.has(entityId)) {
+        Object.entries(entityData).forEach(([componentId, componentData]) => {
+          if (this.getComponentById(componentId)) {
+            const writeCache = this.getComponentOpt(componentId, "writeCache");
+            cache[entityId] = cache[entityId] || {};
+            cache[entityId][componentId] = writeCache(componentData);
+          }
+        });
+      }
     });
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
-      if (entityData === true) {
-        delete cache[entityId];
-      } else {
-        Object.entries(entityData).forEach(([componentId, shouldBeRemoved]) => {
-          if (shouldBeRemoved) {
-            delete cache[entityId][componentId];
-          }
-        });
+      if (this._localEntityMap.has(entityId)) {
+        if (entityData === true) {
+          delete cache[entityId];
+        } else {
+          Object.entries(entityData).forEach(
+            ([componentId, shouldBeRemoved]) => {
+              if (shouldBeRemoved) {
+                delete cache[entityId][componentId];
+              }
+            }
+          );
+        }
       }
     });
     return this;

@@ -82,18 +82,20 @@ describe("Correspondent", () => {
 
   test("root object reuse", () => {
     const world = new ECSY.World();
-    const sut = constructSut(world)
+    const sut = constructSut(world);
     const cache = {};
 
     expect(sut.produceDiff(cache)).toBe(sut.diff);
   });
 
   test("registerComponent opts", () => {
-    class ComplexComponent extends ECSY.Component<{value: {part1: string, part2: string}}> {
+    class ComplexComponent extends ECSY.Component<{
+      value: { part1: string; part2: string };
+    }> {
       value?: {
         part1: string;
         part2: string;
-      }
+      };
     }
 
     const world = new ECSY.World();
@@ -101,14 +103,17 @@ describe("Correspondent", () => {
     const cache = {};
 
     sut.registerComponent("write_read", ComplexComponent, {
-      write: (c) => (c as ComplexComponent).value?.part1 + "," + (c as ComplexComponent).value?.part2,
+      write: (c) =>
+        (c as ComplexComponent).value?.part1 +
+        "," +
+        (c as ComplexComponent).value?.part2,
       read: (c, str) => {
-        const [part1, part2] = (str as string).split(',');
-        (c as any).value = {part1, part2};
-      }
+        const [part1, part2] = (str as string).split(",");
+        (c as any).value = { part1, part2 };
+      },
     });
     sut.registerComponent("writeCache", ComplexComponent, {
-      writeCache: ({part1, part2}) => part1 + part2,
+      writeCache: ({ part1, part2 }) => part1 + part2,
     });
     sut.registerComponent("allow", ComplexComponent, {
       allow: (() => {
@@ -117,18 +122,20 @@ describe("Correspondent", () => {
           const retval = allow;
           allow = false;
           return retval;
-        }
-      })()
+        };
+      })(),
     });
 
     const entity = sut.createEntity("a").addComponent(ComplexComponent, {
       value: {
         part1: "foo",
         part2: "bar",
-      }
+      },
     });
 
-    updateComponent(entity, ComplexComponent, { value: { part1: "baz", part2: "bar" } });
+    updateComponent(entity, ComplexComponent, {
+      value: { part1: "baz", part2: "bar" },
+    });
 
     expect(sut.produceDiff(cache)).toEqual({
       upsert: {
@@ -140,8 +147,8 @@ describe("Correspondent", () => {
           write_read: "baz,bar",
           allow: {
             part1: "baz",
-            part2: "bar"
-          }
+            part2: "bar",
+          },
         },
       },
       remove: {},
@@ -150,7 +157,7 @@ describe("Correspondent", () => {
     const diff = {
       upsert: {
         a: {
-          write_read: "baz,bap"
+          write_read: "baz,bap",
         },
       },
       remove: {},
@@ -158,15 +165,19 @@ describe("Correspondent", () => {
 
     sut.consumeDiff(diff);
 
-    expect((entity.getComponent(ComplexComponent) as ComplexComponent)?.value?.part2).toEqual("bap");
+    expect(
+      (entity.getComponent(ComplexComponent) as ComplexComponent)?.value?.part2
+    ).toEqual("bap");
 
-    updateComponent(entity, ComplexComponent, { value: { part1: "give", part2: "take" } });
+    updateComponent(entity, ComplexComponent, {
+      value: { part1: "give", part2: "take" },
+    });
 
     expect(sut.produceDiff(cache)).toEqual({
       upsert: {
         a: expect.not.objectContaining({
-          allow: expect.anything()
-        })
+          allow: expect.anything(),
+        }),
       },
       remove: {},
     });
@@ -260,9 +271,6 @@ describe("Correspondent", () => {
         anEntity: {
           numero: 1,
         },
-        anotherEntity: {
-          numero: 6,
-        },
       }
     );
 
@@ -288,9 +296,6 @@ describe("Correspondent", () => {
           numero: 1,
           varchar: "Hai!",
         },
-        anotherEntity: {
-          numero: 6,
-        },
       }
     );
 
@@ -308,10 +313,6 @@ describe("Correspondent", () => {
         anEntity: {
           numero: 1,
           varchar: "Hai!",
-        },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Boo!",
         },
       }
     );
@@ -334,16 +335,17 @@ describe("Correspondent", () => {
           numero: 1,
           varchar: "Hai!",
         },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Boo!",
-        },
       }
     );
 
     /** UPDATE COMPONENT ** */
 
     updateComponent(anEntity, StrComponent, { value: "Bai!" });
+
+    // Updating a component created by a diff should not be mentioned in the next diff
+    updateComponent(sut.getEntityById("anotherEntity") as any, NumComponent, {
+      value: 7,
+    });
 
     testProduce(
       {
@@ -359,10 +361,6 @@ describe("Correspondent", () => {
         anEntity: {
           numero: 1,
           varchar: "Bai!",
-        },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Boo!",
         },
       }
     );
@@ -383,10 +381,6 @@ describe("Correspondent", () => {
           numero: 1,
           varchar: "Bai!",
         },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Ahh!",
-        },
       }
     );
 
@@ -398,7 +392,7 @@ describe("Correspondent", () => {
       {
         upsert: {
           anEntity: {
-            numero: 1
+            numero: 1,
           },
         },
         remove: {},
@@ -408,10 +402,6 @@ describe("Correspondent", () => {
         anEntity: {
           numero: 1,
           varchar: "Bai!",
-        },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Ahh!",
         },
       }
     );
@@ -437,10 +427,6 @@ describe("Correspondent", () => {
         anEntity: {
           numero: 1,
         },
-        anotherEntity: {
-          numero: 6,
-          varchar: "Ahh!",
-        },
       }
     );
 
@@ -457,9 +443,6 @@ describe("Correspondent", () => {
       {
         anEntity: {
           numero: 1,
-        },
-        anotherEntity: {
-          numero: 6,
         },
       }
     );
@@ -478,11 +461,7 @@ describe("Correspondent", () => {
         },
       },
       cache,
-      {
-        anotherEntity: {
-          numero: 6,
-        },
-      }
+      {}
     );
 
     cast<jest.Mock>(anotherEntity?.remove).mockClear();
@@ -529,34 +508,34 @@ describe("Correspondent", () => {
     const result = Correspondent.createEmptyDiff();
     expect(result).toEqual({
       upsert: {},
-      remove: {}
-    })
-  })
+      remove: {},
+    });
+  });
 
   test("setUpsert", () => {
     const diff = Correspondent.createEmptyDiff();
-    expect(Correspondent.setUpsert(diff, "anEnt", {c1: 1})).toEqual({
+    expect(Correspondent.setUpsert(diff, "anEnt", { c1: 1 })).toEqual({
       upsert: {
         anEnt: {
-          c1: 1
-        }
+          c1: 1,
+        },
       },
-      remove: {}
-    })
+      remove: {},
+    });
   });
 
   test("getUpsert", () => {
     const diff = {
       upsert: {
         anEnt: {
-          c1: 1
-        }
+          c1: 1,
+        },
       },
-      remove: {}
+      remove: {},
     };
 
     expect(Correspondent.getUpsert(diff, "anEnt")).toEqual({
-      c1: 1
-    })
+      c1: 1,
+    });
   });
 });
