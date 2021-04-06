@@ -62,21 +62,28 @@ export class GameLoop {
 
   useTick(callback: IExecuteFn) {
     const savedCallback = useRef<IExecuteFn>();
-    const savedCallbackIndex = useRef<number>();
 
     useEffect(() => {
       if (savedCallback.current && savedCallback.current != callback) {
-        this._tickCallbacks.splice((savedCallbackIndex.current as number), 1)
+        removeEventListener(this._tickCallbacks, savedCallback.current)
       }
 
       savedCallback.current = callback;
-      savedCallbackIndex.current = this._tickCallbacks.length;
 
       this._tickCallbacks.push(callback);
 
       return () => {
-        this._tickCallbacks.splice((savedCallbackIndex.current as number), 1)
+        removeEventListener(this._tickCallbacks, callback)
       }
     }, [callback]);
   }
 }
+
+function removeEventListener(stack: any[], callback: any) {
+  for (var i = 0, l = stack.length; i < l; i++) {
+    if (stack[i] === callback){
+      stack.splice(i, 1);
+      return;
+    }
+  }
+};
