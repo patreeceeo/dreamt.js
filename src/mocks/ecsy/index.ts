@@ -1,8 +1,15 @@
 import {cast, IWorld, IEntity, RealWorld, RealEntity, RealComponentConstructor} from '../../testUtils';
 
+let nextEntityId = 0;
 export class Entity implements IEntity {
+  id: number;
   alive = false;
   _components = {} as {[key: string]: RealComponentConstructor<any>};
+
+  constructor() {
+    this.id = nextEntityId;
+    nextEntityId++;
+  }
 
   addComponent = jest.fn((Class: RealComponentConstructor<any>, data) => {
     const instance = new Class(data);
