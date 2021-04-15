@@ -18,8 +18,6 @@ export interface IEntityComponentDiff {
   remove: IEntityComponentFlags;
 }
 
-// TODO(optimization) object pooling
-
 export function extractComponentProps(
   compo: Component<any>,
   schema: ECSY.ComponentSchema
@@ -47,6 +45,16 @@ interface IComponentOptsFull<TData> {
 }
 
 type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>;
+
+interface IGlobalOpts {
+  isMine?: (entity: ECSY.Entity) => boolean;
+}
+
+// TODO(optimization) object pooling
+// TODO(feat) add callback option that allows dynamically determining whether to network a component given all the components on the entity
+// TODO(optimization) use Three's approach to tracking when objects change: onChange callbacks
+// TODO(optimization) map string constants to integers
+// TODO(refactor) investigate advantages of other ECS libs like BitECS
 
 /**
  * A message producer and consumer for diff/delta-based networking of Entities.
@@ -151,8 +159,8 @@ export class Correspondent {
     return target.upsert[entityId];
   }
 
-  _entityMap = new Map<string, ECSY.Entity>();
-  _localEntityMap = new Map<string, ECSY.Entity>();
+  _knownEntityMap = new Map<string, ECSY.Entity>();
+  _isMineMap = new Map<string, boolean>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<string, IComponentOpts<any>>();
   _defaultComponentOpts: IComponentOptsFull<any> = {
@@ -165,45 +173,53 @@ export class Correspondent {
     },
     allow: (_compo) => true,
   };
+
   _world: ECSY.World;
+  _options: IGlobalOpts;
 
   diff: IEntityComponentDiff = {
     upsert: {},
     remove: {},
   };
 
-  constructor(world: ECSY.World) {
+  constructor(world: ECSY.World, options: IGlobalOpts = {}) {
     this._world = world;
+    this._options = options;
   }
 
-  registerEntity(id: string, entity: ECSY.Entity) {
-    this._entityMap.set(id, entity);
+  registerEntity(id: string, entity: ECSY.Entity, isMine = true) {
+    this._knownEntityMap.set(id, entity);
+    this._isMineMap.set(id, isMine);
   }
 
   getEntityById(id: string): ECSY.Entity | undefined {
-    return this._entityMap.get(id);
+    return this._knownEntityMap.get(id);
   }
 
   unregisterEntity(id: string) {
-    this._entityMap.delete(id);
+    this._knownEntityMap.delete(id);
   }
 
   getEntityIterator(): Iterable<[string, ECSY.Entity]> {
-    return this._entityMap.entries();
+    return this._knownEntityMap.entries();
   }
 
   /** For convenience */
-  createEntity(id: string, isLocal = true) {
-    const newEntity = this._world.createEntity(id);
-    this.registerEntity(id, newEntity);
-    if (isLocal) this._localEntityMap.set(id, newEntity);
-    return newEntity;
+  isMine(entity: ECSY.Entity) {
+    return this._options?.isMine?.call(null, entity) || false;
+  }
+
+  /** For convenience */
+  createEntity(id: string, isMine = true) {
+    const entity = this._world.createEntity(id);
+    this.registerEntity(id, entity, isMine);
+    return entity;
   }
 
   /** For convenience */
   removeEntityById(id: string) {
     this.getEntityById(id)?.remove();
-    this._localEntityMap.delete(id);
+    this._knownEntityMap.delete(id);
     this.unregisterEntity(id);
   }
 
@@ -251,23 +267,25 @@ export class Correspondent {
   /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(cache: IEntityComponentData): IEntityComponentData {
     const output: IEntityComponentData = {};
-    for (const [entityId, entity] of this._localEntityMap.entries()) {
-      for (const [componentId, Component] of this.getComponentIterator()) {
-        const allow = this.getComponentOpt(componentId, "allow");
-        const compo = entity.getComponent(Component);
-        if (allow(compo!)) {
-          const writeCache = this.getComponentOpt(componentId, "writeCache");
-          const write = this.getComponentOpt(componentId, "write");
-          const valueIdentity = writeCache(write(compo as any));
-          const cacheValue = cache[entityId]
-            ? cache[entityId][componentId]
-            : undefined;
-          if (
-            compo &&
-            (cacheValue === undefined || cacheValue !== valueIdentity)
-          ) {
-            output[entityId] = output[entityId] || {};
-            output[entityId][componentId] = write(compo);
+    for (const [entityId, entity] of this._knownEntityMap.entries()) {
+      if (this._isMineMap.get(entityId)) {
+        for (const [componentId, Component] of this.getComponentIterator()) {
+          const allow = this.getComponentOpt(componentId, "allow");
+          const compo = entity.getComponent(Component);
+          if (allow(compo!)) {
+            const writeCache = this.getComponentOpt(componentId, "writeCache");
+            const write = this.getComponentOpt(componentId, "write");
+            const valueIdentity = writeCache(write(compo as any));
+            const cacheValue = cache[entityId]
+              ? cache[entityId][componentId]
+              : undefined;
+            if (
+              compo &&
+              (cacheValue === undefined || cacheValue !== valueIdentity)
+            ) {
+              output[entityId] = output[entityId] || {};
+              output[entityId][componentId] = write(compo);
+            }
           }
         }
       }
@@ -317,9 +335,10 @@ export class Correspondent {
    */
   consumeDiff(diff: IEntityComponentDiff): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
+      const entity =
+        this.getEntityById(entityId) || this.createEntity(entityId, false);
+
       Object.entries(entityData).forEach(([componentId, componentData]) => {
-        const entity =
-          this.getEntityById(entityId) || this.createEntity(entityId, false);
         const Component = this.getComponentById(componentId)!;
 
         if (!Component) {
@@ -345,6 +364,10 @@ export class Correspondent {
           }
         }
       });
+
+      if (this.isMine(entity)) {
+        this._isMineMap.set(entityId, true);
+      }
     });
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
@@ -366,7 +389,7 @@ export class Correspondent {
     diff: IEntityComponentDiff
   ): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
-      if (this._localEntityMap.has(entityId)) {
+      if (this._isMineMap.get(entityId)) {
         Object.entries(entityData).forEach(([componentId, componentData]) => {
           if (this.getComponentById(componentId)) {
             const writeCache = this.getComponentOpt(componentId, "writeCache");
@@ -378,7 +401,7 @@ export class Correspondent {
     });
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
-      if (this._localEntityMap.has(entityId)) {
+      if (this._isMineMap.get(entityId)) {
         if (entityData === true) {
           delete cache[entityId];
         } else {

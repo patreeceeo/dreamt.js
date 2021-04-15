@@ -88,6 +88,52 @@ describe("Correspondent", () => {
     expect(sut.produceDiff(cache)).toBe(sut.diff);
   });
 
+  test("isMine opt", () => {
+    class OwnershipComponent extends ECSY.Component<{
+      value: number;
+    }> {}
+    class AnotherComponent extends ECSY.Component<{
+      value: number;
+    }> {}
+    const world = new ECSY.World();
+    const sut = new Correspondent(world, {
+      isMine: (entity) => {
+        return (entity.getComponent(OwnershipComponent) as any).value === 1;
+      },
+    });
+    const cache = {};
+
+    sut.registerComponent("ownership", OwnershipComponent);
+    sut.registerComponent("another", AnotherComponent);
+
+    sut.consumeDiff({
+      upsert: {
+        myOtherEntity: {
+          ownership: 1,
+          another: 13,
+        },
+      },
+      remove: {},
+    });
+
+    const myOtherEntity = sut.getEntityById("myOtherEntity");
+
+    expect(myOtherEntity).toBeDefined();
+    if (myOtherEntity) {
+      (myOtherEntity.getMutableComponent(AnotherComponent) as any).value = 17;
+    }
+
+    expect(sut.produceDiff(cache)).toEqual({
+      upsert: {
+        myOtherEntity: {
+          ownership: 1,
+          another: 17,
+        },
+      },
+      remove: {},
+    });
+  });
+
   test("registerComponent opts", () => {
     class ComplexComponent extends ECSY.Component<{
       value: { part1: string; part2: string };
@@ -183,7 +229,7 @@ describe("Correspondent", () => {
     });
   });
 
-  // TODO write separate tests for updateCache?
+  // TODO refactor this test into smaller units
   test("diff operations", () => {
     class NumComponent extends ECSY.Component<any> {
       static schema = {
@@ -257,6 +303,9 @@ describe("Correspondent", () => {
       }
     );
 
+    const anotherEntity = world.createEntity();
+    const createEntityOriginal = sut.createEntity;
+    spyOn(sut, "createEntity").and.returnValue(anotherEntity);
     testConsume(
       {
         upsert: {
@@ -274,8 +323,13 @@ describe("Correspondent", () => {
       }
     );
 
-    const anotherEntity = sut.getEntityById("anotherEntity");
-    expect(anotherEntity?.getComponent(NumComponent)?.value).toBe(6);
+    expect(sut.createEntity).toHaveBeenCalledTimes(1);
+    expect(sut.createEntity).toHaveBeenCalledWith("anotherEntity", false);
+    expect(anotherEntity.addComponent).toHaveBeenCalledTimes(1);
+    expect(anotherEntity.addComponent).toHaveBeenCalledWith(NumComponent, { value: 6 });
+    sut.registerEntity("anotherEntity", anotherEntity, false);
+    sut.createEntity = createEntityOriginal;
+
 
     /** ADD COMPONENT ** */
 
@@ -299,6 +353,7 @@ describe("Correspondent", () => {
       }
     );
 
+    (anotherEntity.addComponent as jest.Mock).mockClear();
     testConsume(
       {
         upsert: {
@@ -317,7 +372,8 @@ describe("Correspondent", () => {
       }
     );
 
-    expect(anotherEntity?.getComponent(StrComponent)?.value).toBe("Boo!");
+    expect(anotherEntity.addComponent).toHaveBeenCalledWith(StrComponent, { value: "Boo!" });
+
 
     /** ADD UNREGISTERED COMPONENT ** */
     testConsume(
@@ -343,7 +399,8 @@ describe("Correspondent", () => {
     updateComponent(anEntity, StrComponent, { value: "Bai!" });
 
     // Updating a component created by a diff should not be mentioned in the next diff
-    updateComponent(sut.getEntityById("anotherEntity") as any, NumComponent, {
+    // Caveat: this can be overridden using the global isMine callback
+    updateComponent(anotherEntity as any, NumComponent, {
       value: 7,
     });
 
