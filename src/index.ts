@@ -1,6 +1,5 @@
 export {
     _Entity as Entity,
-    System,
     Not,
     Component,
     SystemStateComponent,
@@ -17,6 +16,8 @@ export {
     copyCopyable,
     cloneClonable,
 } from "ecsy";
+
+export { System } from './System';
 
 import { Component, ComponentConstructor as ComponentConstructorECSY } from 'ecsy';
 
