@@ -19,11 +19,11 @@ function iterableToArray<I, A = I>(
 }
 
 function listEntityIds(sut: Correspondent) {
-  return iterableToArray(sut.getEntityIterator(), (entry) => entry[0]);
+  return iterableToArray(sut._entityMap.entries(), (entry) => entry[0]);
 }
 
 function listEntities(sut: Correspondent) {
-  return iterableToArray(sut.getEntityIterator(), (entry) => entry[1]);
+  return iterableToArray(sut._entityMap.entries(), (entry) => entry[1][0]);
 }
 
 function constructSut(world: ECSY.World) {
@@ -31,7 +31,7 @@ function constructSut(world: ECSY.World) {
 }
 
 describe("Correspondent", () => {
-  test("(un)registerEntity + getEntityById + getEntityIterator", () => {
+  test("(un)registerEntity + getEntityById", () => {
     const world = new ECSY.World();
     const sut = constructSut(world);
     const entityA = world.createEntity("a");
@@ -53,8 +53,8 @@ describe("Correspondent", () => {
     expect(listEntities(sut)).toEqual([entityB]);
     sut.unregisterEntity("B");
 
-    expect(sut.getEntityById("A")).not.toBeDefined();
-    expect(sut.getEntityById("B")).not.toBeDefined();
+    expect(sut.getEntityById("A")).toBeNull();
+    expect(sut.getEntityById("B")).toBeNull();
     expect(listEntityIds(sut)).toEqual([]);
     expect(listEntities(sut)).toEqual([]);
   });

@@ -163,7 +163,7 @@ export class Correspondent {
     return target.upsert[entityId];
   }
 
-  _knownEntityMap = new Map<string, ECSY.Entity>();
+  _entityMap = new Map<string, [ECSY.Entity, boolean]>();
   _isMineMap = new Map<string, boolean>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<string, IComponentOpts<any>>();
@@ -192,20 +192,15 @@ export class Correspondent {
   }
 
   registerEntity(id: string, entity: ECSY.Entity, isMine = true) {
-    this._knownEntityMap.set(id, entity);
-    this._isMineMap.set(id, isMine);
+    this._entityMap.set(id, [entity, isMine]);
   }
 
-  getEntityById(id: string): ECSY.Entity | undefined {
-    return this._knownEntityMap.get(id);
+  getEntityById(id: string): ECSY.Entity | null {
+    return this._entityMap.has(id) ? this._entityMap.get(id)![0] : null;
   }
 
   unregisterEntity(id: string) {
-    this._knownEntityMap.delete(id);
-  }
-
-  getEntityIterator(): Iterable<[string, ECSY.Entity]> {
-    return this._knownEntityMap.entries();
+    this._entityMap.delete(id);
   }
 
   /** For convenience */
@@ -223,7 +218,6 @@ export class Correspondent {
   /** For convenience */
   removeEntityById(id: string) {
     this.getEntityById(id)?.remove();
-    this._knownEntityMap.delete(id);
     this.unregisterEntity(id);
   }
 
@@ -271,8 +265,8 @@ export class Correspondent {
   /** Should not have side-effects TODO make this a pure function rather than a method? */
   _getUpserts(cache: IEntityComponentData): IEntityComponentData {
     const output: IEntityComponentData = {};
-    for (const [entityId, entity] of this._knownEntityMap.entries()) {
-      if (this._isMineMap.get(entityId)) {
+    for (const [entityId, [entity, isMine]] of this._entityMap.entries()) {
+      if (isMine) {
         for (const [componentId, Component] of this.getComponentIterator()) {
           const allow = this.getComponentOpt(componentId, "allow");
           const compo = entity.getComponent(Component);
@@ -370,7 +364,7 @@ export class Correspondent {
       });
 
       if (this.isMine(entity)) {
-        this._isMineMap.set(entityId, true);
+        this._entityMap.get(entityId)![1] = true;
       }
     });
 
@@ -393,7 +387,7 @@ export class Correspondent {
     diff: IEntityComponentDiff
   ): Correspondent {
     Object.entries(diff.upsert).forEach(([entityId, entityData]) => {
-      if (this._isMineMap.get(entityId)) {
+      if (this._entityMap.has(entityId) && this._entityMap.get(entityId)![1]) {
         Object.entries(entityData).forEach(([componentId, componentData]) => {
           if (this.getComponentById(componentId)) {
             const writeCache = this.getComponentOpt(componentId, "writeCache");
@@ -405,7 +399,7 @@ export class Correspondent {
     });
 
     Object.entries(diff.remove).forEach(([entityId, entityData]) => {
-      if (this._isMineMap.get(entityId)) {
+      if (this._entityMap.has(entityId) && this._entityMap.get(entityId)![1]) {
         if (entityData === true) {
           delete cache[entityId];
         } else {
