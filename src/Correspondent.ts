@@ -46,9 +46,11 @@ interface IComponentOptsFull<TData> {
 
 type IComponentOpts<TData> = Partial<IComponentOptsFull<TData>>;
 
+type IEntityStore = Map<string, [ECSY.Entity, boolean]>;
+
 interface IGlobalOpts {
   isMine?: (entity: ECSY.Entity) => boolean;
-  entityStore?: Correspondent["_entityMap"];
+  entityStore?: IEntityStore;
 }
 
 // TODO(optimization) object pooling
@@ -164,7 +166,11 @@ export class Correspondent {
     return target.upsert[entityId];
   }
 
-  _entityMap: Map<string, [ECSY.Entity, boolean]>;
+  static createEntityStore(): IEntityStore {
+    return new Map();
+  }
+
+  _entityMap: IEntityStore;
   _isMineMap = new Map<string, boolean>();
   _componentMap = new Map<string, ComponentConstructor>();
   _componentOptsMap = new Map<string, IComponentOpts<any>>();
@@ -190,7 +196,7 @@ export class Correspondent {
   constructor(world: ECSY.World, options: IGlobalOpts = {}) {
     this._world = world;
     this._options = options;
-    this._entityMap = options.entityStore || new Map();
+    this._entityMap = options.entityStore || Correspondent.createEntityStore();
   }
 
   registerEntity(id: string, entity: ECSY.Entity, isMine = true) {
