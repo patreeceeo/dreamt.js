@@ -139,9 +139,13 @@ export class Correspondent {
     );
   }
 
+  static createEmptyBox(): IEntityComponentData {
+    return {};
+  }
+
   static createEmptyDiff(): IEntityComponentDiff {
     return {
-      upsert: {},
+      upsert: this.createEmptyBox(),
       remove: {},
     };
   }
