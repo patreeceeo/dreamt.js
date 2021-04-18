@@ -61,10 +61,10 @@
 				<a href="#dreamt" id="dreamt" style="color: inherit; text-decoration: none;">
 					<h1>Dreamt</h1>
 				</a>
-				<p>Just a thing I dreamt up to help me keep pace with my imagination.</p>
-				<p>Dreamt is a nascent game engine for the Web. Ideal for multiplayer games with high vividness and process intensity. This package constitutes the client-side half of the complete engine, though it can be used alone for single player or local multiplayer games. Taking a cue from React, its API aims to be declarative wherever possible.</p>
-				<p>Its current design couples tighly with React because it suits me this way. It could made be more platform-agnostic, through a plugin system for example, if there&#39;s enough interest.</p>
-				<p>Note: This is still vaporware (though quite technically feasible!) It won&#39;t ready to use until version 0.1.0.</p>
+				<p>A thing I dreamt up to help me keep pace with my creative whims in the realm of 3D networked video games.</p>
+				<p>Probably not ready for anyone else to use.</p>
+				<p>Stands on the shoulders of open-source giants. Currently this list includes THREE.js, ECSY, CANNON.js (actually, the active ECMAScript fork, <a href="https://github.com/pmndrs/cannon-es">cannon-es</a>) etc.</p>
+				<p>Designed to be friendly with FP rendering engines (e.g. React). See src/render/EntityRenderConnector.ts</p>
 				<p><a href="https://badge.fury.io/js/dreamt"><img src="https://badge.fury.io/js/dreamt.svg" alt="Package Version"></a>
 					<a href="https://github.com/patreeceeo/dreamt.js/issues"><img src="https://img.shields.io/github/issues/patreeceeo/dreamt.js.svg?style=popout" alt="Open Issues"></a>
 					<a href="https://travis-ci.org/patreeceeo/dreamt.js"><img src="https://travis-ci.org/patreeceeo/dreamt.js.svg?branch=main" alt="Build Status"></a>
@@ -80,119 +80,11 @@
 					<h2>Contents</h2>
 				</a>
 				<ul>
-					<li><a href="#example">An example usage</a></li>
 					<li><a href="#developing">Suggested Development Workflow</a></li>
 					<li><a href="#releasing">Releasing New Code</a></li>
 					<li><a href="#contributing">Contributing</a></li>
 					<li><a href="#credits">Credits</a></li>
 				</ul>
-				<a href="#example" id="example" style="color: inherit; text-decoration: none;">
-					<h3>Example</h3>
-				</a>
-				<p>The code below is just meant to be illustrative, it is not <em>necessarily</em> a functioning program.</p>
-				<pre><code class="language-javascript"><span style="color: #008000">/* GolfBall.jsx */</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">React</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;react&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">useSphere</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@react-three/cannon&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">Position3D</span><span style="color: #000000">, </span><span style="color: #001080">Rotation3D</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt/components&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">useComponent</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt/hooks/react&#039;</span><span style="color: #000000">;</span>
-
-<span style="color: #AF00DB">export</span><span style="color: #000000"> </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #795E26">GolfBall</span><span style="color: #000000"> = ({</span><span style="color: #001080">scripts</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">position</span><span style="color: #000000"> = </span><span style="color: #795E26">useComponent</span><span style="color: #000000">(</span><span style="color: #001080">Position3D</span><span style="color: #000000">);</span>
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">rotation</span><span style="color: #000000"> = </span><span style="color: #795E26">useComponent</span><span style="color: #000000">(</span><span style="color: #001080">Rotation3D</span><span style="color: #000000">);</span>
-
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> [</span><span style="color: #0070C1">cannon</span><span style="color: #000000">, </span><span style="color: #0070C1">cannonApi</span><span style="color: #000000">] = </span><span style="color: #795E26">useSphere</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> ({</span>
-<span style="color: #000000">    </span><span style="color: #001080">args:</span><span style="color: #000000"> </span><span style="color: #098658">1</span>
-<span style="color: #000000">    </span><span style="color: #001080">position</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">rotation</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">mass:</span><span style="color: #000000"> </span><span style="color: #098658">4</span>
-<span style="color: #000000">  }),</span>
-<span style="color: #000000">    </span><span style="color: #0000FF">null</span><span style="color: #000000">,</span>
-<span style="color: #000000">    [</span><span style="color: #001080">position</span><span style="color: #000000">, </span><span style="color: #001080">rotation</span><span style="color: #000000">]</span>
-<span style="color: #000000">  );</span>
-
-<span style="color: #000000">  </span><span style="color: #001080">React</span><span style="color: #000000">.</span><span style="color: #795E26">useEffect</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">scripts</span><span style="color: #000000">.</span><span style="color: #795E26">provide</span><span style="color: #000000">({</span><span style="color: #001080">cannonApi</span><span style="color: #000000">});</span>
-<span style="color: #000000">  }, [</span><span style="color: #001080">cannonApi</span><span style="color: #000000">]);</span>
-
-<span style="color: #000000">  </span><span style="color: #008000">// Using primatives from react-three-fiber</span>
-<span style="color: #000000">  </span><span style="color: #AF00DB">return</span><span style="color: #000000"> (</span>
-<span style="color: #000000">    </span><span style="color: #800000">&lt;mesh</span><span style="color: #000000"> </span><span style="color: #FF0000">ref</span><span style="color: #000000">=</span><span style="color: #0000FF">{</span><span style="color: #001080">cannon</span><span style="color: #0000FF">}</span><span style="color: #800000">&gt;</span>
-<span style="color: #000000">      </span><span style="color: #800000">&lt;</span><span style="color: #267F99">sphereBufferGeometry</span><span style="color: #000000"> </span><span style="color: #FF0000">args</span><span style="color: #000000">=</span><span style="color: #0000FF">{</span><span style="color: #098658">1</span><span style="color: #0000FF">}</span><span style="color: #800000">/&gt;</span>
-<span style="color: #000000">      </span><span style="color: #800000">&lt;</span><span style="color: #267F99">meshBasicMaterial</span><span style="color: #000000"> </span><span style="color: #FF0000">color</span><span style="color: #000000">=</span><span style="color: #A31515">&quot;blue&quot;</span><span style="color: #800000">/&gt;</span>
-<span style="color: #000000">    </span><span style="color: #800000">&lt;/mesh&gt;</span>
-<span style="color: #000000">  )</span>
-<span style="color: #000000">}</span>
-
-<span style="color: #008000">/* main.js */</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">Dreamt</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">withPosition3D</span><span style="color: #000000">, </span><span style="color: #001080">withRotation3D</span><span style="color: #000000">, </span><span style="color: #001080">withScript</span><span style="color: #000000">, </span><span style="color: #001080">withReactThree</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;dreamt/components&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">GolfBallScript</span><span style="color: #000000">, </span><span style="color: #001080">BilliardBallScript</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./scripts&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">selectCurrentWorld</span><span style="color: #000000">, </span><span style="color: #001080">selectYourTurn</span><span style="color: #000000">, </span><span style="color: #001080">selectError</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./globalState&#039;</span><span style="color: #000000">;</span>
-
-<span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defWorld</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;minigolf&quot;</span><span style="color: #000000">, ({</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">entities</span><span style="color: #000000"> = [</span>
-<span style="color: #000000">    </span><span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defEntity</span><span style="color: #000000">(</span>
-<span style="color: #000000">      </span><span style="color: #008000">// Shorthand for withComponent(Position3D).</span>
-<span style="color: #000000">      </span><span style="color: #008000">// These components allow scripts to access the corresponding</span>
-<span style="color: #000000">      </span><span style="color: #008000">// properties of the entity, without them, @react-three/cannon can still</span>
-<span style="color: #000000">      </span><span style="color: #008000">// update them directly on the Object3D instances.</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withPosition3D</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withRotation3D</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withScript</span><span style="color: #000000">(</span><span style="color: #001080">GolfBallScript</span><span style="color: #000000">, {</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withReactThree</span><span style="color: #000000">(</span><span style="color: #001080">GolfBall</span><span style="color: #000000">)</span>
-<span style="color: #000000">    ),</span>
-<span style="color: #000000">  ];</span>
-
-<span style="color: #000000">  </span><span style="color: #AF00DB">return</span><span style="color: #000000"> {</span><span style="color: #001080">entities</span><span style="color: #000000">};</span>
-<span style="color: #000000">}, {</span>
-<span style="color: #000000">  </span><span style="color: #A31515">&quot;data.selectors&quot;</span><span style="color: #001080">:</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">yourTurn:</span><span style="color: #000000"> </span><span style="color: #001080">selectYourTurn</span><span style="color: #000000">,</span>
-<span style="color: #000000">  }</span>
-<span style="color: #000000">})</span>
-
-<span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defWorld</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;billiards&quot;</span><span style="color: #000000">, ({</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">entities</span><span style="color: #000000"> = [</span>
-<span style="color: #000000">    </span><span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">defEntity</span><span style="color: #000000">(</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withPosition3D</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withRotation3D</span><span style="color: #000000">(),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withScript</span><span style="color: #000000">(</span><span style="color: #001080">BilliardBallScript</span><span style="color: #000000">, {</span><span style="color: #001080">yourTurn</span><span style="color: #000000">}),</span>
-<span style="color: #000000">      </span><span style="color: #795E26">withReactThree</span><span style="color: #000000">(</span><span style="color: #001080">BilliardBallMesh</span><span style="color: #000000">)</span>
-<span style="color: #000000">    ),</span>
-<span style="color: #000000">  ];</span>
-
-<span style="color: #000000">  </span><span style="color: #AF00DB">return</span><span style="color: #000000"> {</span><span style="color: #001080">entities</span><span style="color: #000000">};</span>
-<span style="color: #000000">}, {</span>
-<span style="color: #000000">  </span><span style="color: #A31515">&quot;data.selectors&quot;</span><span style="color: #001080">:</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">yourTurn:</span><span style="color: #000000"> </span><span style="color: #001080">selectYourTurn</span><span style="color: #000000">,</span>
-<span style="color: #000000">  }</span>
-<span style="color: #000000">});</span>
-
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">engine</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #267F99">Dreamt</span><span style="color: #000000">.</span><span style="color: #267F99">Engine</span><span style="color: #000000">(</span>
-<span style="color: #000000">  ({</span><span style="color: #001080">currentWorld</span><span style="color: #000000">, </span><span style="color: #001080">error</span><span style="color: #000000">}) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000">(!</span><span style="color: #001080">error</span><span style="color: #000000">) {</span>
-<span style="color: #000000">      </span><span style="color: #001080">Dreamt</span><span style="color: #000000">.</span><span style="color: #795E26">visitWorld</span><span style="color: #000000">(</span><span style="color: #001080">currentWorld</span><span style="color: #000000">);</span>
-<span style="color: #000000">    } </span><span style="color: #AF00DB">else</span><span style="color: #000000"> {</span>
-<span style="color: #000000">      </span><span style="color: #795E26">displayErrorScreen</span><span style="color: #000000">(</span><span style="color: #001080">error</span><span style="color: #000000">);</span>
-<span style="color: #000000">    }</span>
-<span style="color: #000000">  },</span>
-<span style="color: #000000">  {</span>
-<span style="color: #000000">    </span><span style="color: #A31515">&quot;network.socket&quot;</span><span style="color: #001080">:</span><span style="color: #000000"> {</span>
-<span style="color: #000000">      </span><span style="color: #001080">path:</span><span style="color: #000000"> </span><span style="color: #A31515">&quot;/socket&quot;</span><span style="color: #000000">,</span>
-<span style="color: #000000">      </span><span style="color: #001080">params:</span><span style="color: #000000"> {</span>
-<span style="color: #000000">        </span><span style="color: #795E26">playerId</span><span style="color: #001080">:</span><span style="color: #000000"> () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #001080">localStorage</span><span style="color: #000000">.</span><span style="color: #795E26">getItem</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;playerId&quot;</span><span style="color: #000000">)</span>
-<span style="color: #000000">      },</span>
-<span style="color: #000000">      </span><span style="color: #001080">topic:</span><span style="color: #000000"> </span><span style="color: #A31515">&quot;sportballs&quot;</span>
-<span style="color: #000000">    },</span>
-<span style="color: #000000">    </span><span style="color: #A31515">&quot;data.selectors&quot;</span><span style="color: #001080">:</span><span style="color: #000000"> {</span>
-<span style="color: #000000">      </span><span style="color: #001080">currentWorld:</span><span style="color: #000000"> </span><span style="color: #001080">selectCurrentWorld</span><span style="color: #000000">,</span>
-<span style="color: #000000">      </span><span style="color: #001080">error:</span><span style="color: #000000"> </span><span style="color: #001080">selectError</span>
-<span style="color: #000000">    }</span>
-<span style="color: #000000">  }</span>
-<span style="color: #000000">)</span>
-
-<span style="color: #008000">// Start this whole shebang!</span>
-<span style="color: #001080">engine</span><span style="color: #000000">.</span><span style="color: #795E26">loopForever</span><span style="color: #000000">();</span>
-</code></pre>
 				<p>Note: Physics, if desired, can be wired up using <a href="https://github.com/pmndrs/use-cannon"><code>@react-three/cannon</code></a> within <code>react-three-fiber</code> components.</p>
 				<p>PS: Until <a href="https://github.com/pmndrs/use-cannon/pull/124">#124</a> is merged I recommend using <a href="https://github.com/patreeceeo/use-cannon">my fork of @react-three/cannon</a>.</p>
 				<a href="#developing" id="developing" style="color: inherit; text-decoration: none;">
@@ -260,13 +152,43 @@
 						<a href="modules.html">Exports</a>
 					</li>
 					<li class=" tsd-kind-module">
-						<a href="modules/components_position3d.html">components/<wbr>Position3D</a>
+						<a href="modules/correspondent.html">Correspondent</a>
 					</li>
 					<li class=" tsd-kind-module">
-						<a href="modules/components_rotation3d.html">components/<wbr>Rotation3D</a>
+						<a href="modules/dualmodel.html">Dual<wbr>Model</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/gameloop.html">Game<wbr>Loop</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/system.html">System</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/ecsextensions.html">ecs<wbr>Extensions</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/globals.html">globals</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="modules/index.html">index</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/logger.html">logger</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/mocks.html">mocks</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/mocks_ecsy.html">mocks/ecsy</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/mocks_phoenix.html">mocks/phoenix</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/reacthooks.html">react<wbr>Hooks</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/testutils.html">test<wbr>Utils</a>
 					</li>
 				</ul>
 			</nav>
@@ -282,7 +204,17 @@
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
 			</ul>
 		</div>
 	</div>

@@ -1,0 +1,1098 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Correspondent | dreamt</title>
+	<meta name="description" content="Documentation for dreamt">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async src="../assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">dreamt</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../modules.html">dreamt</a>
+				</li>
+				<li>
+					<a href="../modules/correspondent.html">Correspondent</a>
+				</li>
+				<li>
+					<a href="correspondent.correspondent-1.html">Correspondent</a>
+				</li>
+			</ul>
+			<h1>Class Correspondent</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A message producer and consumer for diff/delta-based networking of Entities.
+							How it works: Comparing the local game state with a cached representation of
+						the game state, it produces a diff. The diff contains two kinds of operations:</p>
+					</div>
+					<a href="#upsert" id="upsert" style="color: inherit; text-decoration: none;">
+						<h3>upsert</h3>
+					</a>
+					<p>Either creates an entity or adds a component to an existing entity, or both.
+					It can also update a component&#39;s data. In the following example</p>
+					<pre><code><span style="color: #000000">{</span>
+<span style="color: #000000">  upsert: {</span>
+<span style="color: #000000">    megaMan: {</span>
+<span style="color: #000000">      velocity: { value: </span><span style="color: #098658">6</span><span style="color: #000000"> }</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">  }</span>
+<span style="color: #000000">}</span>
+</code></pre>
+					<p>Would be the resulting diff if Mega Man&#39;s velocity is 6 while the cache says
+						it&#39;s some other integer. When another client is applying this diff to its
+						game state, it would set Mega Man&#39;s velocity to 6, adding the velocity
+					component if necessary, and also creating the Mega Man entity if necessary.</p>
+					<p>When comparing components, it first passes each component through an
+						associated identity function, if available, otherwise it grabs
+						<code>component.value</code>. Either way, it assumes the resulting values should be
+						compared by reference (<code>===</code> in JavaScript.) This is handy for when a by
+						reference comparison would be misleading. For example, if the velocity
+					component were an array:</p>
+					<pre><code><span style="color: #000000">{</span>
+<span style="color: #000000">  upsert: {</span>
+<span style="color: #000000">    megaMan: {</span>
+<span style="color: #000000">      velocity: [</span><span style="color: #098658">3</span><span style="color: #000000">, </span><span style="color: #098658">7</span><span style="color: #000000">]</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">  }</span>
+<span style="color: #000000">}</span>
+</code></pre>
+					<p>Then two velocity components would never appear equal even if they contain
+						the same value. An identity function that concatinates the numbers in to a JS
+						string would solve this, since JS strings are equal by reference if and only
+					if they contain the same value. remove</p>
+					<p>Either removes a component from an entity or removes an entire entity. Example:</p>
+					<pre><code><span style="color: #000000">{</span>
+<span style="color: #000000">  remove: {</span>
+<span style="color: #000000">    megaMan: {</span>
+<span style="color: #000000">      velocity: </span><span style="color: #0000FF">true</span>
+<span style="color: #000000">    },</span>
+<span style="color: #000000">    drWily: </span><span style="color: #0000FF">true</span>
+<span style="color: #000000">  }</span>
+<span style="color: #000000">}</span>
+</code></pre>
+					<p>Would remove the velocity component from Mega Man, and remove the Dr. Wily
+					component altogether.</p>
+					<p>In addition to producing and consuming diffs, it provides a static function
+						that will update the cache given a diff. The cache tells it what the world
+						looked like last time so it knows what&#39;s changed when producing a diff. The
+					cache is its memory.</p>
+					<p>It has a reference to the entire game state (the world, in ECS parlance) but
+						it doesn&#39;t concern itself with every component of every entity. That could be
+						too expensive in terms of CPU and network usage. Instead the system that&#39;s
+						using it must tell it what entities to care about. It also must be told what
+						types of components to care about. We supply it with a string identifier for
+					each entity and each component type which it uses when producing and consuming diffs.</p>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">Correspondent</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_componentmap" class="tsd-kind-icon">_component<wbr>Map</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_componentoptsmap" class="tsd-kind-icon">_component<wbr>Opts<wbr>Map</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_defaultcomponentopts" class="tsd-kind-icon">_default<wbr>Component<wbr>Opts</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_entitymap" class="tsd-kind-icon">_entity<wbr>Map</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_isminemap" class="tsd-kind-icon">_is<wbr>Mine<wbr>Map</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_options" class="tsd-kind-icon">_options</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_world" class="tsd-kind-icon">_world</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#diff" class="tsd-kind-icon">diff</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_getremoves" class="tsd-kind-icon">_get<wbr>Removes</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#_getupserts" class="tsd-kind-icon">_get<wbr>Upserts</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#consumediff" class="tsd-kind-icon">consume<wbr>Diff</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#createentity" class="tsd-kind-icon">create<wbr>Entity</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#getcomponentbyid" class="tsd-kind-icon">get<wbr>Component<wbr>ById</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#getcomponentiterator" class="tsd-kind-icon">get<wbr>Component<wbr>Iterator</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="correspondent.correspondent-1.html#getcomponentopt" class="tsd-kind-icon">get<wbr>Component<wbr>Opt</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#getentitybyid" class="tsd-kind-icon">get<wbr>Entity<wbr>ById</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#ismine" class="tsd-kind-icon">is<wbr>Mine</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#producediff" class="tsd-kind-icon">produce<wbr>Diff</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="correspondent.correspondent-1.html#registercomponent" class="tsd-kind-icon">register<wbr>Component</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#registerentity" class="tsd-kind-icon">register<wbr>Entity</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#removecomponentbyid" class="tsd-kind-icon">remove<wbr>Component<wbr>ById</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#removeentitybyid" class="tsd-kind-icon">remove<wbr>Entity<wbr>ById</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#unregisterentity" class="tsd-kind-icon">unregister<wbr>Entity</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="correspondent.correspondent-1.html#updatecache" class="tsd-kind-icon">update<wbr>Cache</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#createemptybox" class="tsd-kind-icon">create<wbr>Empty<wbr>Box</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#createemptydiff" class="tsd-kind-icon">create<wbr>Empty<wbr>Diff</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#createentitystore" class="tsd-kind-icon">create<wbr>Entity<wbr>Store</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#getupsert" class="tsd-kind-icon">get<wbr>Upsert</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#isemptydiff" class="tsd-kind-icon">is<wbr>Empty<wbr>Diff</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="correspondent.correspondent-1.html#setupsert" class="tsd-kind-icon">set<wbr>Upsert</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Correspondent<span class="tsd-signature-symbol">(</span>world<span class="tsd-signature-symbol">: </span><a href="index.world.html" class="tsd-signature-type" data-tsd-kind="Class">World</a><span class="tsd-signature-symbol">&lt;</span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a><span class="tsd-signature-symbol">&gt;</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">IGlobalOpts</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L194">src/Correspondent.ts:194</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>world: <a href="index.world.html" class="tsd-signature-type" data-tsd-kind="Class">World</a><span class="tsd-signature-symbol">&lt;</span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a><span class="tsd-signature-symbol">&gt;</span></h5>
+								</li>
+								<li>
+									<h5>options: <span class="tsd-signature-type">IGlobalOpts</span><span class="tsd-signature-symbol"> = ...</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_componentmap" class="tsd-anchor"></a>
+					<h3>_component<wbr>Map</h3>
+					<div class="tsd-signature tsd-kind-icon">_component<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L175">src/Correspondent.ts:175</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_componentoptsmap" class="tsd-anchor"></a>
+					<h3>_component<wbr>Opts<wbr>Map</h3>
+					<div class="tsd-signature tsd-kind-icon">_component<wbr>Opts<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L176">src/Correspondent.ts:176</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_defaultcomponentopts" class="tsd-anchor"></a>
+					<h3>_default<wbr>Component<wbr>Opts</h3>
+					<div class="tsd-signature tsd-kind-icon">_default<wbr>Component<wbr>Opts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L177">src/Correspondent.ts:177</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_entitymap" class="tsd-anchor"></a>
+					<h3>_entity<wbr>Map</h3>
+					<div class="tsd-signature tsd-kind-icon">_entity<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IEntityStore</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L173">src/Correspondent.ts:173</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_isminemap" class="tsd-anchor"></a>
+					<h3>_is<wbr>Mine<wbr>Map</h3>
+					<div class="tsd-signature tsd-kind-icon">_is<wbr>Mine<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L174">src/Correspondent.ts:174</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_options" class="tsd-anchor"></a>
+					<h3>_options</h3>
+					<div class="tsd-signature tsd-kind-icon">_options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IGlobalOpts</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L189">src/Correspondent.ts:189</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="_world" class="tsd-anchor"></a>
+					<h3>_world</h3>
+					<div class="tsd-signature tsd-kind-icon">_world<span class="tsd-signature-symbol">:</span> <a href="index.world.html" class="tsd-signature-type" data-tsd-kind="Class">World</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L188">src/Correspondent.ts:188</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="diff" class="tsd-anchor"></a>
+					<h3>diff</h3>
+					<div class="tsd-signature tsd-kind-icon">diff<span class="tsd-signature-symbol">:</span> <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L191">src/Correspondent.ts:191</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="_getremoves" class="tsd-anchor"></a>
+					<h3>_get<wbr>Removes</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">_get<wbr>Removes<span class="tsd-signature-symbol">(</span>cache<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentflags.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentFlags</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L303">src/Correspondent.ts:303</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Should not have side-effects</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cache: <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentflags.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentFlags</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="_getupserts" class="tsd-anchor"></a>
+					<h3>_get<wbr>Upserts</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">_get<wbr>Upserts<span class="tsd-signature-symbol">(</span>cache<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L274">src/Correspondent.ts:274</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Should not have side-effects TODO make this a pure function rather than a method?</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cache: <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="consumediff" class="tsd-anchor"></a>
+					<h3>consume<wbr>Diff</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">consume<wbr>Diff<span class="tsd-signature-symbol">(</span>diff<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L342">src/Correspondent.ts:342</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Applies diff to the allow-listed components of registered entities
+										mentioned therein. Additionally, it will create entities mentioned in
+										<code>message</code> and add their components if necessary. Conversely, it will remove
+									entities that are ommitted by <code>message</code>.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>diff: <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createentity" class="tsd-anchor"></a>
+					<h3>create<wbr>Entity</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Entity<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, isMine<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L220">src/Correspondent.ts:220</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>For convenience</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>isMine: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getcomponentbyid" class="tsd-anchor"></a>
+					<h3>get<wbr>Component<wbr>ById</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Component<wbr>ById<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L255">src/Correspondent.ts:255</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getcomponentiterator" class="tsd-anchor"></a>
+					<h3>get<wbr>Component<wbr>Iterator</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Component<wbr>Iterator<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Iterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L259">src/Correspondent.ts:259</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Iterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+					<a name="getcomponentopt" class="tsd-anchor"></a>
+					<h3>get<wbr>Component<wbr>Opt</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Component<wbr>Opt&lt;K&gt;<span class="tsd-signature-symbol">(</span>componentId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, optName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">K</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">K</span><span class="tsd-signature-symbol">]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L263">src/Correspondent.ts:263</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>K<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;write&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;read&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;writeCache&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;allow&quot;</span></h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>componentId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>optName: <span class="tsd-signature-type">K</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">K</span><span class="tsd-signature-symbol">]</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getentitybyid" class="tsd-anchor"></a>
+					<h3>get<wbr>Entity<wbr>ById</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Entity<wbr>ById<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L206">src/Correspondent.ts:206</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="ismine" class="tsd-anchor"></a>
+					<h3>is<wbr>Mine</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Mine<span class="tsd-signature-symbol">(</span>entity<span class="tsd-signature-symbol">: </span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L215">src/Correspondent.ts:215</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>For convenience</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>entity: <a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="producediff" class="tsd-anchor"></a>
+					<h3>produce<wbr>Diff</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">produce<wbr>Diff<span class="tsd-signature-symbol">(</span>cache<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L330">src/Correspondent.ts:330</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the operations necessary to bring the network up-to-date with the local
+									world instance.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cache: <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h4>
+							<p>Target.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+					<a name="registercomponent" class="tsd-anchor"></a>
+					<h3>register<wbr>Component</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">register<wbr>Component&lt;TData&gt;<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, Component<span class="tsd-signature-symbol">: </span><a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TData</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>, opts<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TData</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L243">src/Correspondent.ts:243</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Add component of the given type to the allow list, meaning the data of any
+										instances of registered entities will be sent and recieved over the socket.
+									TODO should allowed components only be passed in constructor?</p>
+								</div>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>TData</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>Component: <a href="../modules/index.html#componentconstructor" class="tsd-signature-type" data-tsd-kind="Type alias">ComponentConstructor</a><span class="tsd-signature-symbol">&lt;</span><a href="index.component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TData</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> opts: <span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">IComponentOptsFull</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TData</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="registerentity" class="tsd-anchor"></a>
+					<h3>register<wbr>Entity</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">register<wbr>Entity<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, entity<span class="tsd-signature-symbol">: </span><a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a>, isMine<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L202">src/Correspondent.ts:202</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>entity: <a href="index.entity.html" class="tsd-signature-type" data-tsd-kind="Class">Entity</a></h5>
+								</li>
+								<li>
+									<h5>isMine: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="removecomponentbyid" class="tsd-anchor"></a>
+					<h3>remove<wbr>Component<wbr>ById</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Component<wbr>ById<span class="tsd-signature-symbol">(</span>entityId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, componentId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L233">src/Correspondent.ts:233</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>For convenience</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>entityId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>componentId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="removeentitybyid" class="tsd-anchor"></a>
+					<h3>remove<wbr>Entity<wbr>ById</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Entity<wbr>ById<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L227">src/Correspondent.ts:227</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>For convenience</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="unregisterentity" class="tsd-anchor"></a>
+					<h3>unregister<wbr>Entity</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">unregister<wbr>Entity<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L210">src/Correspondent.ts:210</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>id: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="updatecache" class="tsd-anchor"></a>
+					<h3>update<wbr>Cache</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">update<wbr>Cache<span class="tsd-signature-symbol">(</span>cache<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a>, diff<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L393">src/Correspondent.ts:393</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cache: <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h5>
+								</li>
+								<li>
+									<h5>diff: <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="correspondent.correspondent-1.html" class="tsd-signature-type" data-tsd-kind="Class">Correspondent</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="createemptybox" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> create<wbr>Empty<wbr>Box</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Empty<wbr>Box<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L145">src/Correspondent.ts:145</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentData</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="createemptydiff" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> create<wbr>Empty<wbr>Diff</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Empty<wbr>Diff<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L149">src/Correspondent.ts:149</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="createentitystore" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> create<wbr>Entity<wbr>Store</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Entity<wbr>Store<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">IEntityStore</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L169">src/Correspondent.ts:169</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">IEntityStore</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="getupsert" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Upsert</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Upsert<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a>, entityId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{}</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L165">src/Correspondent.ts:165</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>target: <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h5>
+								</li>
+								<li>
+									<h5>entityId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">{}</span></h4>
+							<ul class="tsd-parameters">
+								<li class="tsd-parameter-index-signature">
+									<h5><span class="tsd-signature-symbol">[</span>componentId: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">any</span></h5>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="isemptydiff" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> is<wbr>Empty<wbr>Diff</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Empty<wbr>Diff<span class="tsd-signature-symbol">(</span>diff<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L138">src/Correspondent.ts:138</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>diff: <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="setupsert" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> set<wbr>Upsert</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Upsert<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a>, entityId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, componentData<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/patreeceeo/dreamt.js/blob/a26bb87/src/Correspondent.ts#L156">src/Correspondent.ts:156</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>target: <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h5>
+								</li>
+								<li>
+									<h5>entityId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>componentData: <span class="tsd-signature-type">any</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-signature-type" data-tsd-kind="Interface">IEntityComponentDiff</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="../modules.html">Exports</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="../modules/correspondent.html">Correspondent</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/dualmodel.html">Dual<wbr>Model</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/gameloop.html">Game<wbr>Loop</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/system.html">System</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/ecsextensions.html">ecs<wbr>Extensions</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/globals.html">globals</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/index.html">index</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/logger.html">logger</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/mocks.html">mocks</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/mocks_ecsy.html">mocks/ecsy</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/mocks_phoenix.html">mocks/phoenix</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/reacthooks.html">react<wbr>Hooks</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/testutils.html">test<wbr>Utils</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class tsd-parent-kind-module">
+						<a href="correspondent.correspondent-1.html" class="tsd-kind-icon">Correspondent</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_componentmap" class="tsd-kind-icon">_component<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_componentoptsmap" class="tsd-kind-icon">_component<wbr>Opts<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_defaultcomponentopts" class="tsd-kind-icon">_default<wbr>Component<wbr>Opts</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_entitymap" class="tsd-kind-icon">_entity<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_isminemap" class="tsd-kind-icon">_is<wbr>Mine<wbr>Map</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_options" class="tsd-kind-icon">_options</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_world" class="tsd-kind-icon">_world</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#diff" class="tsd-kind-icon">diff</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_getremoves" class="tsd-kind-icon">_get<wbr>Removes</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#_getupserts" class="tsd-kind-icon">_get<wbr>Upserts</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#consumediff" class="tsd-kind-icon">consume<wbr>Diff</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#createentity" class="tsd-kind-icon">create<wbr>Entity</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#getcomponentbyid" class="tsd-kind-icon">get<wbr>Component<wbr>ById</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#getcomponentiterator" class="tsd-kind-icon">get<wbr>Component<wbr>Iterator</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+								<a href="correspondent.correspondent-1.html#getcomponentopt" class="tsd-kind-icon">get<wbr>Component<wbr>Opt</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#getentitybyid" class="tsd-kind-icon">get<wbr>Entity<wbr>ById</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#ismine" class="tsd-kind-icon">is<wbr>Mine</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#producediff" class="tsd-kind-icon">produce<wbr>Diff</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+								<a href="correspondent.correspondent-1.html#registercomponent" class="tsd-kind-icon">register<wbr>Component</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#registerentity" class="tsd-kind-icon">register<wbr>Entity</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#removecomponentbyid" class="tsd-kind-icon">remove<wbr>Component<wbr>ById</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#removeentitybyid" class="tsd-kind-icon">remove<wbr>Entity<wbr>ById</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#unregisterentity" class="tsd-kind-icon">unregister<wbr>Entity</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="correspondent.correspondent-1.html#updatecache" class="tsd-kind-icon">update<wbr>Cache</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#createemptybox" class="tsd-kind-icon">create<wbr>Empty<wbr>Box</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#createemptydiff" class="tsd-kind-icon">create<wbr>Empty<wbr>Diff</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#createentitystore" class="tsd-kind-icon">create<wbr>Entity<wbr>Store</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#getupsert" class="tsd-kind-icon">get<wbr>Upsert</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#isemptydiff" class="tsd-kind-icon">is<wbr>Empty<wbr>Diff</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="correspondent.correspondent-1.html#setupsert" class="tsd-kind-icon">set<wbr>Upsert</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="../interfaces/correspondent.ientitycomponentdata.html" class="tsd-kind-icon">IEntity<wbr>Component<wbr>Data</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="../interfaces/correspondent.ientitycomponentdiff.html" class="tsd-kind-icon">IEntity<wbr>Component<wbr>Diff</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="../interfaces/correspondent.ientitycomponentflags.html" class="tsd-kind-icon">IEntity<wbr>Component<wbr>Flags</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="../modules/correspondent.html#extractcomponentprops" class="tsd-kind-icon">extract<wbr>Component<wbr>Props</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
