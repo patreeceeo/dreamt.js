@@ -12,7 +12,7 @@ interface IOptions {
 export class GameLoop {
   _started = false;
   _executeFn: IExecuteFn;
-  _intervalMs: number;
+  _durationMs: number;
   _options: IOptions;
   _intervalId: any;
   _tickCallbacks: IExecuteFn[] = [];
@@ -20,11 +20,11 @@ export class GameLoop {
 
   constructor(
     executeFn: IExecuteFn,
-    frequencyHz: number,
+    durationMs: number,
     options: IOptions = {}
   ) {
     this._executeFn = executeFn;
-    this._intervalMs = frequencyHz;
+    this._durationMs = durationMs;
     this._options = options;
   }
 
@@ -38,7 +38,7 @@ export class GameLoop {
   }
 
   _justStart() {
-    const intervalMs = this._intervalMs;
+    const intervalMs = this._durationMs;
     this._intervalId = setInterval(() => {
       // TODO naively incrementing time by interval duration
       // get more accuracy with performance.now()?
