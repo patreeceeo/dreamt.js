@@ -24,17 +24,17 @@ describe("GameLoop", () => {
 
     sut.start();
 
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(execute).toHaveBeenCalledTimes(3);
-    expect(execute).toHaveBeenCalledWith(50, 50);
-    expect(execute).toHaveBeenCalledWith(50, 100);
-    expect(execute).toHaveBeenCalledWith(50, 150);
+    expect(execute).toHaveBeenCalledWith(20, 20);
+    expect(execute).toHaveBeenCalledWith(20, 40);
+    expect(execute).toHaveBeenCalledWith(20, 60);
 
     sut.stop();
     execute.mockClear();
 
-    jest.advanceTimersByTime((1000 / 20) * 2);
+    jest.advanceTimersByTime(20 * 2);
 
     expect(execute).not.toHaveBeenCalled();
   });
@@ -45,13 +45,13 @@ describe("GameLoop", () => {
 
     sut.start();
     (_window as any).capturedBlurListener();
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(execute).not.toHaveBeenCalled();
 
     (_window as any).capturedFocusListener();
 
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(execute).toHaveBeenCalledTimes(3);
 
@@ -59,9 +59,9 @@ describe("GameLoop", () => {
 
     (_window as any).capturedBlurListener();
     (_window as any).capturedFocusListener();
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
-    expect(execute).toHaveBeenCalledWith(50, 6 * 50)
+    expect(execute).toHaveBeenCalledWith(20, 6 * 20)
   });
 
   test("useTick hook", () => {
@@ -73,14 +73,14 @@ describe("GameLoop", () => {
 
     sut.start();
 
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(spy1).toHaveBeenCalledTimes(3);
 
     rerender({callback: spy2});
     spy1.mockClear();
 
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(spy2).toHaveBeenCalledTimes(3);
     expect(spy1).not.toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("GameLoop", () => {
     unmount();
     rerender({callback: spy1});
 
-    jest.advanceTimersByTime((1000 / 20) * 3);
+    jest.advanceTimersByTime(20 * 3);
 
     expect(spy1).toHaveBeenCalledTimes(3);
     expect(spy2).not.toHaveBeenCalled();
