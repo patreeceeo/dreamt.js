@@ -35,3 +35,4 @@ export { useStateFromComponentMap } from './reactHooks';
 
 export * as camera from './camera';
 
+export * as math from './math';
