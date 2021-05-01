@@ -32,3 +32,6 @@ export { GameLoop } from './GameLoop';
 export { DualModel } from './DualModel';
 
 export { useStateFromComponentMap } from './reactHooks';
+
+export * as camera from './camera';
+
