@@ -32,4 +32,13 @@ test("calculateEulerBetweenPoints", () => {
   expect(result.x).toBeCloseTo(0);
   expect(result.y).toBeCloseTo(0);
   expect(result.z).toBeCloseTo(PI/2);
+
+  pointA.set(0, 0, 0)
+  pointB.set(0, 1, 0)
+
+  result = calculateEulerBetweenPoints(pointA, pointB);
+
+  expect(result.x).toBeCloseTo(0);
+  expect(result.y).toBeCloseTo(0);
+  expect(result.z).toBeCloseTo(0);
 });
