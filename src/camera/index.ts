@@ -43,17 +43,18 @@ export function apply3rdPersonView(
     target.position.copy(groundIntersection);
   }
 
-  apply3rdPersonViewSimple(
-    unrestrictedCamera,
-    position,
-    lookDirection,
-    cameraSetback
-  );
+  if (groundIntersection || cameraRigAngleX !== lookDirection.x) {
+    apply3rdPersonViewSimple(
+      unrestrictedCamera,
+      position,
+      lookDirection,
+      cameraSetback
+    );
 
-  target.rotation.copy(unrestrictedCamera.rotation);
-  target.rotation.x = -target.rotation.x;
-  target.rotation.y = -target.rotation.y;
-  target.rotation.z = -target.rotation.z;
+    target.rotation.x = -unrestrictedCamera.rotation.x;
+    target.rotation.y = -unrestrictedCamera.rotation.y;
+    target.rotation.z = -unrestrictedCamera.rotation.z;
+  }
 }
 
 function apply3rdPersonViewSimple(
