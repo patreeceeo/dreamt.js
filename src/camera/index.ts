@@ -15,7 +15,7 @@ export function apply3rdPersonView(
   const fullSetbackDelta = v1
     .set(0, 0, cameraSetback)
     .applyEuler(lookDirection);
-  const fullSetback = v2.subVectors(target.position, fullSetbackDelta);
+  const fullSetback = v2.subVectors(position, fullSetbackDelta);
 
   const targetPosition = lookDirection.x < 0 ? intersectLineWithPlane(
     target.position,
