@@ -1,59 +1,73 @@
-import { Camera, Euler, Object3D, Vector3 } from "three";
+import { Euler, Object3D, Vector3 } from "three";
 import { intersectLineWithPlane } from "../math";
 
 const v1 = new Vector3();
-const v2 = new Vector3();
 const groundNormal = new Vector3(0, -1, 0);
 const e1 = new Euler();
 const o1 = new Object3D();
 
 export function apply3rdPersonView(
-  target: Camera,
+  target: Object3D,
   position: Vector3,
   lookDirection: Euler,
   cameraSetback: number,
   cameraElevation: number,
   bodyCylinderRadius = 0
 ) {
-  const cameraRigAngle = e1.copy(lookDirection);
+  const unrestrictedCamera = o1;
+  let cameraRigAngleX = lookDirection.x;
 
   if (bodyCylinderRadius > 0) {
+    const cameraRigAngle = e1;
     const minAngle = -Math.atan(cameraElevation / bodyCylinderRadius);
-    cameraRigAngle.x = Math.max(
-      cameraRigAngle.x,
-      minAngle
-    );
+
+    cameraRigAngle.copy(lookDirection);
+    cameraRigAngleX = Math.max(lookDirection.x, minAngle);
+    cameraRigAngle.x = cameraRigAngleX;
+    apply3rdPersonViewSimple(target, position, cameraRigAngle, cameraSetback);
+  } else {
+    apply3rdPersonViewSimple(target, position, lookDirection, cameraSetback);
   }
 
-  const fullSetbackDelta = v1
-    .set(0, 0, cameraSetback)
-    .applyEuler(cameraRigAngle);
-  const fullSetback = v2.subVectors(position, fullSetbackDelta);
-
   const groundIntersection =
-    cameraRigAngle.x < 0
+    cameraRigAngleX < 0
       ? intersectLineWithPlane(
           position,
-          fullSetback,
+          target.position,
           groundNormal,
           position.y - cameraElevation
         )
       : null;
 
-  const targetPosition = groundIntersection
-    ? groundIntersection.distanceTo(position) < cameraSetback
-      ? groundIntersection
-      : fullSetback
-    : fullSetback;
+  if (groundIntersection) {
+    target.position.copy(groundIntersection);
+  }
 
-  const unrestrictedCamera = o1;
-  const fullSetbackUnrestrictedDelta = v1
-    .set(0, 0, cameraSetback)
-    .applyEuler(lookDirection);
+  apply3rdPersonViewSimple(
+    unrestrictedCamera,
+    position,
+    lookDirection,
+    cameraSetback
+  );
 
-  unrestrictedCamera.position.copy(position).add(fullSetbackUnrestrictedDelta)
-  unrestrictedCamera.lookAt(position);
-
-  target.position.copy(targetPosition!);
   target.rotation.copy(unrestrictedCamera.rotation);
+  target.rotation.x = -target.rotation.x;
+  target.rotation.y = -target.rotation.y;
+  target.rotation.z = -target.rotation.z;
+}
+
+function apply3rdPersonViewSimple(
+  target: Object3D,
+  position: Vector3,
+  lookDirection: Euler,
+  cameraSetback: number
+) {
+  const fullSetbackDelta = v1;
+  // const fullSetback = v2;
+
+  fullSetbackDelta.set(0, 0, cameraSetback).applyEuler(lookDirection);
+  // fullSetback.copy(position).sub(fullSetbackDelta);
+
+  target.position.copy(position).sub(fullSetbackDelta);
+  target.lookAt(position);
 }
