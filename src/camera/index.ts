@@ -18,10 +18,10 @@ export function apply3rdPersonView(
   const fullSetback = v2.subVectors(position, fullSetbackDelta);
 
   const targetPosition = lookDirection.x < 0 ? intersectLineWithPlane(
-    target.position,
+    position,
     fullSetback,
     groundNormal,
-    target.position.y - cameraElevation
+    position.y - cameraElevation
   ) :  fullSetback;
 
   target.position.copy(targetPosition!);
