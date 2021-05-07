@@ -51,9 +51,7 @@ export function apply3rdPersonView(
       cameraSetback
     );
 
-    target.rotation.x = -unrestrictedCamera.rotation.x;
-    target.rotation.y = -unrestrictedCamera.rotation.y;
-    target.rotation.z = -unrestrictedCamera.rotation.z;
+    target.rotation.copy(unrestrictedCamera.rotation)
   }
 }
 
