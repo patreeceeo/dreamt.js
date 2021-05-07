@@ -17,12 +17,21 @@ export function apply3rdPersonView(
     .applyEuler(lookDirection);
   const fullSetback = v2.subVectors(position, fullSetbackDelta);
 
-  const targetPosition = lookDirection.x < 0 ? intersectLineWithPlane(
-    position,
-    fullSetback,
-    groundNormal,
-    position.y - cameraElevation
-  ) :  fullSetback;
+  const groundIntersection =
+    lookDirection.x < 0
+      ? intersectLineWithPlane(
+          position,
+          fullSetback,
+          groundNormal,
+          position.y - cameraElevation
+        )
+      : null;
+
+  const targetPosition = groundIntersection
+    ? groundIntersection.distanceTo(position) < cameraSetback
+      ? groundIntersection
+      : fullSetback
+    : fullSetback;
 
   target.position.copy(targetPosition!);
   target.lookAt(position);
