@@ -27,7 +27,7 @@ describe("apply3rdPersonView", () => {
     const target = new Camera();
     const lookDirection = new Euler(0, Math.PI/2, 0);
     const position = new Vector3(0, 0, 0);
-    const expectedRotation = new Euler(0, -Math.PI/2, 0,);
+    const expectedRotation = new Euler(-0, -Math.PI/2, 0);
     apply3rdPersonView(target, position, lookDirection, 5, 3);
     expect(target.rotation.toArray()).toEqual(expectedRotation.toArray());
   });
@@ -56,5 +56,17 @@ describe("apply3rdPersonView", () => {
     const position = new Vector3(0, 0, 0);
     apply3rdPersonView(target, position, lookDirection, setback, elevation, bodyCylinderRadius);
     expect(target.position.z).toBeCloseTo(- bodyCylinderRadius)
+  });
+
+  test("camera always looks in same direction as player", () => {
+    const target = new Camera();
+    const xRot = -Math.PI / 2;
+    const setback = 7;
+    const elevation = 1;
+    const bodyCylinderRadius = 1;
+    const lookDirection = new Euler(xRot, 0, 0);
+    const position = new Vector3(0, 0, 0);
+    apply3rdPersonView(target, position, lookDirection, setback, elevation, bodyCylinderRadius);
+    expect(target.rotation.x).toBe(-lookDirection.x)
   });
 });

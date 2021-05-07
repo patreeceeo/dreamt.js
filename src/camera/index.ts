@@ -47,4 +47,5 @@ export function apply3rdPersonView(
 
   target.position.copy(targetPosition!);
   target.lookAt(position);
+  target.rotation.x = - lookDirection.x;
 }
