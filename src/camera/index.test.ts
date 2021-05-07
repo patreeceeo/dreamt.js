@@ -67,6 +67,6 @@ describe("apply3rdPersonView", () => {
     const lookDirection = new Euler(xRot, 0, 0);
     const position = new Vector3(0, 0, 0);
     apply3rdPersonView(target, position, lookDirection, setback, elevation, bodyCylinderRadius);
-    expect(target.rotation.x).toBeCloseTo(lookDirection.x)
+    expect(target.rotation.x).toBeCloseTo(-lookDirection.x)
   });
 });

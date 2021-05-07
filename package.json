@@ -1,6 +1,6 @@
 {
   "name": "dreamt",
-  "version": "0.6.14",
+  "version": "0.6.15",
   "description": "Assorted reusable bits of game code and, aspirationally, a flexible, 3D, performant, networked game engine",
   "keywords": [
     "typescript",

@@ -48,7 +48,7 @@ export function apply3rdPersonView(
       unrestrictedCamera,
       position,
       lookDirection,
-      cameraSetback
+      -cameraSetback
     );
 
     target.rotation.copy(unrestrictedCamera.rotation)
@@ -62,10 +62,8 @@ function apply3rdPersonViewSimple(
   cameraSetback: number
 ) {
   const fullSetbackDelta = v1;
-  // const fullSetback = v2;
 
   fullSetbackDelta.set(0, 0, cameraSetback).applyEuler(lookDirection);
-  // fullSetback.copy(position).sub(fullSetbackDelta);
 
   target.position.copy(position).sub(fullSetbackDelta);
   target.lookAt(position);
