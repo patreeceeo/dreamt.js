@@ -45,4 +45,16 @@ describe("apply3rdPersonView", () => {
     expect(target.position.y).toBeCloseTo(- elevation)
     expect(target.position.z).toBeCloseTo(groundIntersection)
   });
+
+  test("keeps camera from getting too close", () => {
+    const target = new Camera();
+    const xRot = -Math.PI / 2;
+    const setback = 7;
+    const elevation = 1;
+    const bodyCylinderRadius = 1;
+    const lookDirection = new Euler(xRot, 0, 0);
+    const position = new Vector3(0, 0, 0);
+    apply3rdPersonView(target, position, lookDirection, setback, elevation, bodyCylinderRadius);
+    expect(target.position.z).toBeCloseTo(- bodyCylinderRadius)
+  });
 });
