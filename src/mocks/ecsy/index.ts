@@ -69,3 +69,7 @@ export class World implements IWorld {
   registerComponent = cast<RealWorld["registerComponent"]>(jest.fn(() => this));
   registerSystem = cast<RealWorld["registerSystem"]>(jest.fn(() => this));
 }
+
+export function createType(typeDef: any) {
+  return typeDef;
+}
