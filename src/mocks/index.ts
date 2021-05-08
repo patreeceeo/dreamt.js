@@ -1,2 +1,2 @@
-export {Entity, System, World, Component, Types} from './ecsy';
+export {Entity, System, World, Component, Types, createType} from './ecsy';
 export {Socket} from './phoenix';
