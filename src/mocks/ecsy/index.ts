@@ -1,10 +1,17 @@
-import {cast, IWorld, IEntity, RealWorld, RealEntity, RealComponentConstructor} from '../../testUtils';
+import {
+  cast,
+  IWorld,
+  IEntity,
+  RealWorld,
+  RealEntity,
+  RealComponentConstructor,
+} from "../../testUtils";
 
 let nextEntityId = 0;
 export class Entity implements IEntity {
   id: number;
   alive = false;
-  _components = {} as {[key: string]: RealComponentConstructor<any>};
+  _components = {} as { [key: string]: RealComponentConstructor<any> };
 
   constructor() {
     this.id = nextEntityId;
@@ -22,11 +29,13 @@ export class Entity implements IEntity {
     return cast<RealEntity>(this);
   }
 
-  getComponent = cast<RealEntity["getComponent"]>((C: RealComponentConstructor<any>) => {
-    return this._components[C.name];
-  })
+  getComponent = cast<RealEntity["getComponent"]>(
+    (C: RealComponentConstructor<any>) => {
+      return this._components[C.name];
+    }
+  );
 
-  getMutableComponent = this.getComponent
+  getMutableComponent = this.getComponent;
 
   hasComponent(C: RealComponentConstructor<any>) {
     return !!this._components[C.name];
@@ -37,7 +46,6 @@ export class Entity implements IEntity {
   });
 }
 
-
 export class System {}
 
 export class Component {
@@ -46,10 +54,14 @@ export class Component {
     Object.assign(this, data);
   }
 }
+export class TagComponent {
+  isComponent = true;
+  constructor() {}
+}
 
 export const Types = {
-  String: 'String',
-  Number: 'Number'
+  String: "String",
+  Number: "Number",
 };
 
 export class World implements IWorld {
@@ -60,7 +72,7 @@ export class World implements IWorld {
     entity.alive = true;
     this.entities.set(name, entity);
     return cast<RealEntity>(entity);
-  })
+  });
 
   __getEntities(): Map<string, Entity> {
     return this.entities;
