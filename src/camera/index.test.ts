@@ -1,3 +1,5 @@
+// import {testProviders } from "../testProviders";
+// testProviders();
 import { apply3rdPersonView } from "./index";
 import { Camera, Euler, Vector3 } from "three";
 

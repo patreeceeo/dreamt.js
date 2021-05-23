@@ -1,20 +1,19 @@
 import {
   Euler,
-  Plane,
-  Quaternion,
   Vector2,
   Vector3,
   Vector4,
-  Line3,
 } from "three";
 
-const q1 = new Quaternion();
-const v1 = new Vector3();
-const e1 = new Euler();
-const p1 = new Plane();
-const l1 = new Line3();
+import * as objectPools from '../pools';
 
-export const vUp = Object.freeze(new Vector3(0, 1, 0));
+const q0 = objectPools.scratch(0, objectPools.acquireQuaternion);
+const v0 = objectPools.scratch(0, objectPools.acquireVector3);
+const e0 = objectPools.scratch(0, objectPools.acquireEuler);
+const p0 = objectPools.scratch(0, objectPools.acquirePlane);
+const l0 = objectPools.scratch(0, objectPools.acquireLine3);
+
+export const vUp = Object.freeze(objectPools.acquireVector3().set(0, 1, 0));
 
 export function vectorRoundTo(
   v: Vector2 | Vector3 | Vector4,
@@ -28,7 +27,7 @@ export function measureEulerBetweenVectors(
   target: Euler,
   vecA: Vector3,
   vecB: Vector3,
-  qRotIntermediate = q1
+  qRotIntermediate = q0
 ) {
   qRotIntermediate.setFromUnitVectors(vecA, vecB);
   target.setFromQuaternion(qRotIntermediate);
@@ -37,11 +36,11 @@ export function measureEulerBetweenVectors(
 export function calculateEulerBetweenPoints(
   pointA: Vector3,
   pointB: Vector3,
-  target = e1,
+  target = e0,
   v0Angle = vUp
 ) {
-  v1.copy(pointB).sub(pointA).normalize();
-  measureEulerBetweenVectors(target, v0Angle, v1);
+  v0.copy(pointB).sub(pointA).normalize();
+  measureEulerBetweenVectors(target, v0Angle, v0);
   return target;
 }
 
@@ -50,10 +49,10 @@ export function intersectLineWithPlane(
   linePointB: Vector3,
   planeNormal: Vector3,
   planeConstant: number,
-  target = v1
+  target = v0
 ): Vector3 | null {
-  l1.set(linePointA, linePointB);
-  p1.set(planeNormal, planeConstant);
-  return p1.intersectLine(l1, target);
+  l0.set(linePointA, linePointB);
+  p0.set(planeNormal, planeConstant);
+  return p0.intersectLine(l0, target);
 }
 
