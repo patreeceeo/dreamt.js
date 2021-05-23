@@ -1,6 +1,6 @@
 {
   "name": "dreamt",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Assorted reusable bits of game code and, aspirationally, a flexible, 3D, performant, networked game engine",
   "keywords": [
     "typescript",
@@ -63,7 +63,6 @@
     "coveralls": "^3.0.3",
     "cz-conventional-changelog": "^3.0.2",
     "husky": "^4.3.6",
-    "invariant": "^2.2.4",
     "jest": "^26.6.3",
     "jsdoc": "^3.6.6",
     "prettier": "^2.2.1",
@@ -85,6 +84,7 @@
   "dependencies": {
     "debounce": "^1.2.1",
     "ecsy": "0.4.2",
+    "invariant": "^2.2.4",
     "lodash": "^4.17.20",
     "mobx": "6.0.4",
     "mobx-react-lite": "3.1.6",
