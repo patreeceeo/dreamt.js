@@ -1,4 +1,5 @@
 import { Euler, Vector2, Vector3, Vector4 } from "three";
+import { lazyFactory } from "../lazy";
 import {
   acquireLine3,
   acquirePlane,
@@ -8,13 +9,9 @@ import {
   scratch,
 } from "../pools";
 
-export const getUpVector = (() => {
-  let upVector: Vector3;
-  return () => {
-    upVector = upVector || Object.freeze(acquireVector3().set(0, 1, 0));
-    return upVector;
-  };
-})();
+export const getUpVector = lazyFactory(() =>
+  Object.freeze(acquireVector3().set(0, 1, 0))
+);
 
 export function vectorRoundTo(
   v: Vector2 | Vector3 | Vector4,
