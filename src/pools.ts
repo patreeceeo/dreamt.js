@@ -11,6 +11,7 @@ import {
 import { provider } from "./provider";
 import { lazyFactory } from "./lazy";
 
+const mapPool = new ObjectPool<Map<any, any>>(Map as any);
 const getEulerPool = lazyFactory(() => new ObjectPool<Euler>(provider.get("Euler") as any));
 const getPlanePool = lazyFactory(() => new ObjectPool<Plane>(provider.get("Plane") as any));
 const getQuaterionPool = lazyFactory(() => new ObjectPool<Quaternion>(
@@ -21,14 +22,9 @@ const getVector4Pool = lazyFactory(() => new ObjectPool<Vector4>(provider.get("V
 const getLine3Pool = lazyFactory(() => new ObjectPool<Line3>(provider.get("Line3") as any));
 const getObject3DPool = lazyFactory(() => new ObjectPool<Object3D>(provider.get("Object3D") as any));
 
-const scratchPad = new Map<[number, () => any], any>();
-export function scratch<T>(index: number, acquireFn: () => T): T {
-  const key = [index, acquireFn] as [number, () => T];
-  const result = scratchPad.get(key) || acquireFn();
-  scratchPad.set(key, result);
-  return result;
+export function acquireMap() {
+  return mapPool.acquire();
 }
-
 export function acquireEuler() {
   return getEulerPool().acquire();
 }
