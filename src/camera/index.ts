@@ -1,11 +1,11 @@
 import { Euler, Object3D, Vector3 } from "three";
 import { intersectLineWithPlane } from "../math";
-import {scratch, acquireVector3, acquireEuler, acquireObject3D} from "../pools";
-
-const v0 = scratch(0, acquireVector3);
-const groundNormal = acquireVector3().set(0, -1, 0);
-const e0 = scratch(0, acquireEuler);
-const o1 = scratch(0, acquireObject3D);
+import {
+  scratch,
+  acquireVector3,
+  acquireEuler,
+  acquireObject3D,
+} from "../pools";
 
 export function apply3rdPersonView(
   target: Object3D,
@@ -15,11 +15,13 @@ export function apply3rdPersonView(
   cameraElevation: number,
   bodyCylinderRadius = 0
 ) {
-  const unrestrictedCamera = o1;
+  const unrestrictedCamera = scratch(0, acquireObject3D);
+  const groundNormal = scratch(0, acquireVector3).set(0, -1, 0);
   let cameraRigAngleX = lookDirection.x;
 
+
   if (bodyCylinderRadius > 0) {
-    const cameraRigAngle = e0;
+    const cameraRigAngle = scratch(0, acquireEuler);
     const minAngle = -Math.atan(cameraElevation / bodyCylinderRadius);
 
     cameraRigAngle.copy(lookDirection);
@@ -52,7 +54,7 @@ export function apply3rdPersonView(
       -cameraSetback
     );
 
-    target.rotation.copy(unrestrictedCamera.rotation)
+    target.rotation.copy(unrestrictedCamera.rotation);
   }
 }
 
@@ -62,7 +64,7 @@ function apply3rdPersonViewSimple(
   lookDirection: Euler,
   cameraSetback: number
 ) {
-  const fullSetbackDelta = v0;
+  const fullSetbackDelta = scratch(0, acquireVector3);
 
   fullSetbackDelta.set(0, 0, cameraSetback).applyEuler(lookDirection);
 

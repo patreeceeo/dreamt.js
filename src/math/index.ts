@@ -1,19 +1,20 @@
+import { Euler, Vector2, Vector3, Vector4 } from "three";
 import {
-  Euler,
-  Vector2,
-  Vector3,
-  Vector4,
-} from "three";
+  acquireLine3,
+  acquirePlane,
+  acquireQuaternion,
+  acquireVector3,
+  acquireEuler,
+  scratch,
+} from "../pools";
 
-import * as objectPools from '../pools';
-
-const q0 = objectPools.scratch(0, objectPools.acquireQuaternion);
-const v0 = objectPools.scratch(0, objectPools.acquireVector3);
-const e0 = objectPools.scratch(0, objectPools.acquireEuler);
-const p0 = objectPools.scratch(0, objectPools.acquirePlane);
-const l0 = objectPools.scratch(0, objectPools.acquireLine3);
-
-export const vUp = Object.freeze(objectPools.acquireVector3().set(0, 1, 0));
+export const getUpVector = (() => {
+  let upVector: Vector3;
+  return () => {
+    upVector = upVector || Object.freeze(acquireVector3().set(0, 1, 0));
+    return upVector;
+  };
+})();
 
 export function vectorRoundTo(
   v: Vector2 | Vector3 | Vector4,
@@ -27,7 +28,7 @@ export function measureEulerBetweenVectors(
   target: Euler,
   vecA: Vector3,
   vecB: Vector3,
-  qRotIntermediate = q0
+  qRotIntermediate = scratch(0, acquireQuaternion)
 ) {
   qRotIntermediate.setFromUnitVectors(vecA, vecB);
   target.setFromQuaternion(qRotIntermediate);
@@ -36,11 +37,12 @@ export function measureEulerBetweenVectors(
 export function calculateEulerBetweenPoints(
   pointA: Vector3,
   pointB: Vector3,
-  target = e0,
-  v0Angle = vUp
+  target = scratch(0, acquireEuler),
+  v0Angle = getUpVector()
 ) {
-  v0.copy(pointB).sub(pointA).normalize();
-  measureEulerBetweenVectors(target, v0Angle, v0);
+  const normalVector = scratch(0, acquireVector3);
+  normalVector.copy(pointB).sub(pointA).normalize();
+  measureEulerBetweenVectors(target, v0Angle, normalVector);
   return target;
 }
 
@@ -49,10 +51,11 @@ export function intersectLineWithPlane(
   linePointB: Vector3,
   planeNormal: Vector3,
   planeConstant: number,
-  target = v0
+  target = scratch(0, acquireVector3)
 ): Vector3 | null {
-  l0.set(linePointA, linePointB);
-  p0.set(planeNormal, planeConstant);
-  return p0.intersectLine(l0, target);
+  const line = scratch(0, acquireLine3);
+  const plane = scratch(0, acquirePlane);
+  line.set(linePointA, linePointB);
+  plane.set(planeNormal, planeConstant);
+  return plane.intersectLine(line, target);
 }
-
