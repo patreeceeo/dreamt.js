@@ -1,11 +1,10 @@
-import {lazyFactory} from "./lazy";
+import { lazyFactory } from "./lazy";
 
 test("lazyFactory", () => {
-  function robotFactory () {
-    return {};
-  }
+  const robotFactory = jest.fn(() => ({}));
 
   const lazyRobotFactory = lazyFactory(robotFactory);
 
   expect(lazyRobotFactory()).toBe(lazyRobotFactory());
+  expect(robotFactory).toHaveBeenCalledTimes(1);
 });
