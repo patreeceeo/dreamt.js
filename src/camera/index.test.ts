@@ -34,15 +34,15 @@ describe("apply3rdPersonView", () => {
 
   test("keeps camera above ground", () => {
     const target = new Camera();
-    const xRot = -Math.atan(0.5);
+    const xRot = -Math.PI / 4;
     const setback = 7;
     const elevation = 3;
     const groundIntersection = elevation / Math.tan(xRot);
     const lookDirection = new Euler(xRot, 0, 0);
-    const position = new Vector3(0, 0, 0);
+    const position = new Vector3(0, elevation, 0);
     apply3rdPersonView(target, position, lookDirection, setback, elevation);
     expect(target.position.x).toBeCloseTo(0)
-    expect(target.position.y).toBeCloseTo(- elevation)
+    expect(target.position.y).toBeCloseTo(0)
     expect(target.position.z).toBeCloseTo(groundIntersection)
   });
 

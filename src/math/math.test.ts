@@ -1,5 +1,28 @@
-import { Euler, Vector3 } from "three";
+import { Euler, Line3, Plane, Quaternion, Vector3 } from "three";
 import { calculateEulerBetweenPoints, intersectLineWithPlane } from "./index";
+
+jest.mock("../pools", () => {
+  return {
+    mapPool: {
+      acquireValue: () => new Map(),
+    },
+    eulerPool: {
+      acquireValue: () => new Euler(),
+    },
+    line3Pool: {
+      acquireValue: () => new Line3(),
+    },
+    planePool: {
+      acquireValue: () => new Plane(),
+    },
+    quaterionPool: {
+      acquireValue: () => new Quaternion(),
+    },
+    vector3Pool: {
+      acquireValue: () => new Vector3(),
+    }
+  };
+});
 
 const PI = Math.PI;
 
@@ -49,7 +72,8 @@ test("intersectLineWithPlane", () => {
     new Vector3(0, 0, 0),
     new Vector3(2, 0, 0),
     new Vector3(-1, 0, 0),
-    0.5
+    0.5,
+    new Vector3(),
   );
 
   expect(result!.x).toBe(0.5);
@@ -60,7 +84,8 @@ test("intersectLineWithPlane", () => {
     new Vector3(0, 0, 0),
     new Vector3(0, 2, 0),
     new Vector3(0, -1, 0),
-    0.5
+    0.5,
+    new Vector3(),
   );
 
   expect(result!.x).toBe(0);
@@ -71,7 +96,8 @@ test("intersectLineWithPlane", () => {
     new Vector3(0, 0, 0),
     new Vector3(0, -2, 0),
     new Vector3(0, -1, 0),
-    -0.5
+    -0.5,
+    new Vector3(),
   );
 
   expect(result!.x).toBe(0);
@@ -82,7 +108,8 @@ test("intersectLineWithPlane", () => {
     new Vector3(2, 0, 0),
     new Vector3(0, 2, 0),
     new Vector3(0, -1, 0),
-    0.5
+    0.5,
+    new Vector3(),
   );
 
   expect(result!.x).toBe(1.5);

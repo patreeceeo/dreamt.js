@@ -1,4 +1,5 @@
-import { ObjectPool } from "ecsy/src/ObjectPool";
+import { ObjectPool } from "./ObjectPool";
+import { Component } from '.';
 import {
   Euler,
   Plane,
@@ -11,38 +12,110 @@ import {
 import { provider } from "./provider";
 import { lazyFactory } from "./lazy";
 
-const mapPool = new ObjectPool<Map<any, any>>(Map as any);
-const getEulerPool = lazyFactory(() => new ObjectPool<Euler>(provider.get("Euler") as any));
-const getPlanePool = lazyFactory(() => new ObjectPool<Plane>(provider.get("Plane") as any));
-const getQuaterionPool = lazyFactory(() => new ObjectPool<Quaternion>(
-  provider.get("Quaternion") as any
-));
-const getVector3Pool = lazyFactory(() => new ObjectPool<Vector3>(provider.get("Vector3") as any));
-const getVector4Pool = lazyFactory(() => new ObjectPool<Vector4>(provider.get("Vector4") as any));
-const getLine3Pool = lazyFactory(() => new ObjectPool<Line3>(provider.get("Line3") as any));
-const getObject3DPool = lazyFactory(() => new ObjectPool<Object3D>(provider.get("Object3D") as any));
+class MapPoolItem extends Component<Map<any, any>> {
+  value: Map<any, any>;
+  constructor() {
+    super();
+    this.value = new Map();
+  }
 
-export function acquireMap() {
-  return mapPool.acquire();
+  reset() {
+    this.value.clear();
+  }
 }
-export function acquireEuler() {
-  return getEulerPool().acquire();
+
+class EulerComponent extends Component<Euler> {
+  value: Euler;
+  constructor() {
+    super();
+    this.value = new (provider.get("Euler") as any)();
+  }
+
+  reset() {
+    this.value.set(0, 0, 0);
+  }
 }
-export function acquirePlane() {
-  return getPlanePool().acquire();
+
+class PlaneComponent extends Component<Plane> {
+  value: Plane;
+  constructor() {
+    super();
+    this.value = new (provider.get("Plane") as any)();
+  }
+
+  reset() {
+    this.value.setComponents(0, 0, 0, 0);
+  }
 }
-export function acquireQuaternion() {
-  return getQuaterionPool().acquire();
+
+class QuaternionComponent extends Component<Quaternion> {
+  value: Quaternion;
+  constructor() {
+    super();
+    this.value = new (provider.get("Quaternion") as any)();
+  }
+
+  reset() {
+    this.value.set(0, 0, 0, 0);
+  }
 }
-export function acquireVector3() {
-  return getVector3Pool().acquire();
+
+class Vector3Component extends Component<Vector3> {
+  value: Vector3;
+  constructor() {
+    super();
+    this.value = new (provider.get("Vector3") as any)();
+  }
+
+  reset() {
+    this.value.set(0, 0, 0);
+  }
 }
-export function acquireVector4() {
-  return getVector4Pool().acquire();
+
+class Vector4Component extends Component<Vector4> {
+  value: Vector4;
+  constructor() {
+    super();
+    this.value = new (provider.get("Vector4") as any)();
+  }
+
+  reset() {
+    this.value.set(0, 0, 0, 0);
+  }
 }
-export function acquireLine3() {
-  return getLine3Pool().acquire();
+
+class Line3Component extends Component<Line3> {
+  value: Line3;
+  constructor() {
+    super();
+    this.value = new (provider.get("Line3") as any)();
+  }
+
+  reset() {
+    this.value.start.set(0, 0, 0);
+    this.value.end.set(0, 0, 0)
+  }
 }
-export function acquireObject3D() {
-  return getObject3DPool().acquire();
+
+class Object3DComponent extends Component<Object3D> {
+  value: Object3D;
+  static getDefault = lazyFactory(() => new (provider.get("Object3D") as any));
+  constructor() {
+    super();
+    this.value = new (provider.get("Object3D") as any)();
+  }
+
+  reset() {
+    this.value.copy(Object3DComponent.getDefault())
+  }
 }
+
+export const mapPool = new ObjectPool<MapPoolItem>(MapPoolItem);
+export const eulerPool = new ObjectPool<EulerComponent>(EulerComponent);
+export const planePool = new ObjectPool<PlaneComponent>(PlaneComponent);
+export const quaterionPool = new ObjectPool<QuaternionComponent>(QuaternionComponent);
+export const vector3Pool = new ObjectPool<Vector3Component>(Vector3Component);
+export const vector4Pool = new ObjectPool<Vector4Component>(Vector4Component);
+export const line3Pool = new ObjectPool<Line3Component>(Line3Component);
+export const object3DPool = new ObjectPool<Object3DComponent>(Object3DComponent);
+

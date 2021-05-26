@@ -17,6 +17,10 @@ export {
     cloneClonable,
 } from "ecsy";
 
+export interface SimpleComponent<V> extends Component<V> {
+  value: V;
+}
+
 export { System } from './System';
 
 import { Component, ComponentConstructor as ComponentConstructorECSY } from 'ecsy';
